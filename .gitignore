@@ -1,0 +1,69 @@
+# Fichiers système
+.DS_Store
+Thumbs.db
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# XAMPP/Local
+.htaccess
+*.conf
+localhost/
+
+# PHP
+composer.lock
+vendor/
+*.log
+
+# Database
+*.sql
+config/database-local.php
+
+# Erreurs PHP
+php_errors.log
+debug.log
+
+# Fichiers temporaires
+tmp/
+temp/
+cache/
+*.tmp
+
+# OS-specific
+$RECYCLE.BIN/
+
+# Git
+.git/
+.gitkeep
+
+# Build
+dist/
+build/
+
+# Node (si ajout futur)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Fichiers de tests
+test-results.xml
+coverage/
+
+# Uploads (si futur)
+uploads/
+media/
+
+# Configuration locale (ne pas commiter)
+config/Database.php (si config sensible)
