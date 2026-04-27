@@ -1,8 +1,8 @@
 <?php
 /**
  * Dashboard Admin - Gestion de Nutrition (Régimes & Recettes)
- * Style ECOSAVE (Vert écologique)
- * Point d'accès: http://localhost/gestion-allergies/app/views/admin.php
+ * Style asteria (Vert écologique)
+ * Point d'accès: http://localhost/gestion-diet/app/views/admin.php
  */
 ?>
 <!DOCTYPE html>
@@ -10,8 +10,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - EcoSave Diet Manager</title>
+    <title>Admin Dashboard - asteria Diet Manager</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <style>
         :root { --primary: #2e7d32; --primary-light: #66bb6a; --bg: #f4f9f4; --card-bg: #ffffff; --text: #1a3a1a; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -69,15 +72,41 @@
         .form-group label { display: block; margin-bottom: 10px; font-weight: 600; color: #333; font-size: 14px; }
         .form-control { width: 100%; padding: 14px 20px; border: 2px solid #edf2ed; border-radius: 14px; font-size: 15px; background: #fafdfa; color: var(--text); transition: 0.3s; }
         .form-control:focus { border-color: var(--primary); outline: none; background: white; box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.05); }
+
+        /* Search Bar */
+        .search-container { position: relative; width: 300px; }
+        .search-container input { padding-left: 45px; }
+        .search-container::before { content: '🔍'; position: absolute; left: 15px; top: 50%; transform: translateY(-50%); opacity: 0.5; }
+
+        /* Sorting Headers */
+        .sortable { cursor: pointer; position: relative; user-select: none; }
+        .sortable:hover { background: #f0f7f0 !important; }
+        .sortable::after { content: '↕'; position: absolute; right: 10px; opacity: 0.3; }
+        .sortable.asc::after { content: '↑'; opacity: 1; color: var(--primary); }
+        .sortable.desc::after { content: '↓'; opacity: 1; color: var(--primary); }
+
+        /* Toast Notifications */
+        #toast-container { position: fixed; bottom: 30px; right: 30px; z-index: 9999; }
+        .toast { background: #2e7d32; color: white; padding: 16px 28px; border-radius: 16px; margin-top: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 3s forwards; display: flex; align-items: center; gap: 12px; font-weight: 600; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(20px); } }
+
+        /* Loading Spinner */
+        #spinner { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+        .spinner-icon { width: 50px; height: 50px; border: 5px solid #e0e0e0; border-top: 5px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Stats Chart Container */
+        .chart-container { background: white; border-radius: 24px; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); margin-bottom: 30px; height: 350px; }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <h2>Asteria</h2>
+        <h2>🌱 asteria Admin</h2>
         <a href="#" class="active" onclick="showSection('dashboard', this)"><span>📊</span> Dashboard</a>
         <a href="#" onclick="showSection('plans', this)"><span>📅</span> Programmes</a>
         <a href="#" onclick="showSection('recipes', this)"><span>🥗</span> Recettes</a>
-        
+        <a href="#" onclick="showSection('pages', this)"><span>📄</span> Pages Statiques</a>
     </div>
 
     <div class="main">
@@ -107,28 +136,34 @@
                 </div>
             </div>
 
-            <div class="row" style="display: flex; gap: 30px;">
-                <div class="card" style="flex: 2;">
-                    <div class="card-header"><h5>🔥 Nouveaux Plans</h5></div>
-                    <div class="card-body" id="latest-plans"></div>
-                </div>
-                <div class="card" style="flex: 1;">
-                    <div class="card-header"><h5>📂 Types de Repas</h5></div>
-                    <div class="card-body" style="padding: 20px;">
-                        <ul style="list-style: none;">
-                            <li style="margin: 10px 0; display: flex; justify-content: space-between;">Petit Déj <span class="badge bg-success">40%</span></li>
-                            <li style="margin: 10px 0; display: flex; justify-content: space-between;">Déjeuner <span class="badge bg-success">35%</span></li>
-                            <li style="margin: 10px 0; display: flex; justify-content: space-between;">Dîner <span class="badge bg-success">25%</span></li>
-                        </ul>
+            <div class="row" style="display: flex; gap: 30px; margin-bottom: 40px;">
+                <div style="flex: 1;">
+                    <div class="chart-container">
+                        <h5 style="margin-bottom: 20px; color: var(--primary);">📊 Répartition par Niveau</h5>
+                        <canvas id="chart-levels"></canvas>
                     </div>
                 </div>
+                <div style="flex: 1;">
+                    <div class="chart-container">
+                        <h5 style="margin-bottom: 20px; color: var(--primary);">🍕 Types de Repas</h5>
+                        <canvas id="chart-meals"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h5>🔥 Nouveaux Plans</h5></div>
+                <div class="card-body" id="latest-plans"></div>
             </div>
         </div>
 
         <!-- PLANS SECTION -->
         <div id="plans" class="page-section">
-            <div style="margin-bottom: 30px; display: flex; justify-content: space-between;">
+            <div style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
                 <button class="btn btn-primary" onclick="openPlanModal()">➕ Nouveau Programme</button>
+                <div class="search-container">
+                    <input type="text" id="search-plans" class="form-control" placeholder="Rechercher un programme..." onkeyup="debounceSearch('plans')">
+                </div>
             </div>
             <div class="card">
                 <div class="card-body"><div id="plans-list"></div></div>
@@ -137,8 +172,11 @@
 
         <!-- RECIPES SECTION -->
         <div id="recipes" class="page-section">
-            <div style="margin-bottom: 30px;">
+            <div style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
                 <button class="btn btn-primary" onclick="openRecipeModal()">➕ Nouvelle Recette</button>
+                <div class="search-container">
+                    <input type="text" id="search-recipes" class="form-control" placeholder="Rechercher une recette..." onkeyup="debounceSearch('recipes')">
+                </div>
             </div>
             <div class="card">
                 <div class="card-body"><div id="recipes-list"></div></div>
@@ -147,8 +185,11 @@
 
         <!-- PAGES SECTION -->
         <div id="pages" class="page-section">
-            <div style="margin-bottom: 30px;">
+            <div style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
                 <button class="btn btn-primary" onclick="openPageModal()">➕ Nouvelle Page</button>
+                <div class="search-container">
+                    <input type="text" id="search-pages" class="form-control" placeholder="Rechercher une page..." onkeyup="debounceSearch('pages')">
+                </div>
             </div>
             <div class="card">
                 <div class="card-body"><div id="pages-list"></div></div>
@@ -163,25 +204,25 @@
                 <h5 id="plan-modal-title">Nouveau Programme</h5>
                 <button style="background:none; border:none; color:white; font-size:28px; cursor:pointer;" onclick="closeModal('plan-modal')">&times;</button>
             </div>
-            <form id="plan-form">
+            <form id="plan-form" novalidate>
                 <div class="modal-body">
                     <input type="hidden" id="plan-id">
                     <div class="form-group">
                         <label>Titre *</label>
-                        <input type="text" id="plan-title" class="form-control" required>
+                        <input type="text" id="plan-title" class="form-control">
                     </div>
                     <div class="form-group">
                         <label>Objectif *</label>
-                        <input type="text" id="plan-goal" class="form-control" placeholder="Ex: Perte de poids" required>
+                        <input type="text" id="plan-goal" class="form-control" placeholder="Ex: Perte de poids">
                     </div>
                     <div style="display: flex; gap: 20px;">
                         <div class="form-group" style="flex:1">
                             <label>Durée (jours) *</label>
-                            <input type="number" id="plan-duration" class="form-control" value="30" required>
+                            <input type="number" id="plan-duration" class="form-control" value="30">
                         </div>
                         <div class="form-group" style="flex:1">
                             <label>Calories/jour *</label>
-                            <input type="number" id="plan-calories" class="form-control" required>
+                            <input type="number" id="plan-calories" class="form-control">
                         </div>
                     </div>
                     <div style="display: flex; gap: 20px;">
@@ -217,16 +258,16 @@
                 <h5 id="recipe-modal-title">Nouvelle Recette</h5>
                 <button style="background:none; border:none; color:white; font-size:28px; cursor:pointer;" onclick="closeModal('recipe-modal')">&times;</button>
             </div>
-            <form id="recipe-form">
+            <form id="recipe-form" novalidate>
                 <div class="modal-body">
                     <input type="hidden" id="recipe-id">
                     <div class="form-group">
                         <label>Nom de la Recette *</label>
-                        <input type="text" id="recipe-name" class="form-control" required>
+                        <input type="text" id="recipe-name" class="form-control">
                     </div>
                     <div class="form-group">
                         <label>Programme Associé *</label>
-                        <select id="recipe-plan" class="form-control" required></select>
+                        <select id="recipe-plan" class="form-control"></select>
                     </div>
                     <div style="display: flex; gap: 20px;">
                         <div class="form-group" style="flex:1">
@@ -258,11 +299,76 @@
         </div>
     </div>
 
+    <div id="toast-container"></div>
+    <div id="spinner"><div class="spinner-icon"></div></div>
+
     <script src="assets/js/validation.js"></script>
     <script>
         const API_BASE = '../../index.php';
-        let state = { section: 'dashboard' };
+        let state = { 
+            section: 'dashboard',
+            plans: { search: '', sort: 'id', order: 'DESC' },
+            recipes: { search: '', sort: 'r.id', order: 'DESC' },
+            pages: { search: '', sort: 'id', order: 'DESC' }
+        };
 
+        // --- UX UTILS ---
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> ${msg}`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        function toggleSpinner(show) {
+            document.getElementById('spinner').style.display = show ? 'flex' : 'none';
+        }
+
+        let debounceTimer;
+        function debounceSearch(type) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                state[type].search = document.getElementById(`search-${type}`).value;
+                if (type === 'plans') loadPlans();
+                else if (type === 'recipes') loadRecipes();
+            }, 500);
+        }
+
+        function toggleSort(type, col) {
+            if (state[type].sort === col) {
+                state[type].order = state[type].order === 'ASC' ? 'DESC' : 'ASC';
+            } else {
+                state[type].sort = col;
+                state[type].order = 'ASC';
+            }
+            if (type === 'plans') loadPlans();
+            else if (type === 'recipes') loadRecipes();
+        }
+
+        function getSortClass(type, col) {
+            if (state[type].sort !== col) return 'sortable';
+            return `sortable ${state[type].order.toLowerCase()}`;
+        }
+
+        // --- VALIDATION (NO HTML5) ---
+        function validatePlanData(data) {
+            if (!data.title || data.title.trim() === '') return "Le titre est obligatoire";
+            if (!data.goal || data.goal.trim() === '') return "L'objectif est obligatoire";
+            if (!data.duration_days || data.duration_days <= 0) return "Durée invalide";
+            if (!data.target_calories_per_day || data.target_calories_per_day <= 0) return "Calories invalides";
+            return null;
+        }
+
+        function validateRecipeData(data) {
+            if (!data.name || data.name.trim() === '') return "Le nom est obligatoire";
+            if (!data.diet_plan_id) return "Veuillez choisir un programme";
+            if (!data.calories || data.calories < 0) return "Calories invalides";
+            return null;
+        }
+
+        // --- NAVIGATION ---
         function showSection(section, el) {
             document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
@@ -277,16 +383,24 @@
             if (section === 'pages') loadPages();
         }
 
+        // --- DASHBOARD & CHARTS ---
+        let charts = {};
         async function loadDashboard() {
+            toggleSpinner(true);
             try {
-                const [pRes, rRes, pgRes] = await Promise.all([
+                const [pRes, rRes, pgRes, pStatsRes, rStatsRes] = await Promise.all([
                     fetch(`${API_BASE}?controller=DietPlan&action=obtenirTous`),
                     fetch(`${API_BASE}?controller=Recipe&action=obtenirTous`),
-                    fetch(`${API_BASE}?controller=StaticPage&action=obtenirTous`)
+                    fetch(`${API_BASE}?controller=StaticPage&action=obtenirTous`),
+                    fetch(`${API_BASE}?controller=DietPlan&action=obtenirStats`),
+                    fetch(`${API_BASE}?controller=Recipe&action=obtenirStats`)
                 ]);
+                
                 const pData = await pRes.json();
                 const rData = await rRes.json();
                 const pgData = await pgRes.json();
+                const pStats = await pStatsRes.json();
+                const rStats = await rStatsRes.json();
 
                 if (pData.success) {
                     document.getElementById('stat-active-plans').textContent = pData.plans.filter(p => p.status === 'ACTIVE').length;
@@ -295,35 +409,93 @@
                 }
                 if (rData.success) document.getElementById('stat-total-recipes').textContent = rData.recipes.length;
                 if (pgData.success) document.getElementById('stat-total-pages').textContent = pgData.pages.length;
-            } catch (e) { console.error(e); }
-        }
 
-        // PLANS
-        let allPlans = [];
-        async function loadPlans() {
-            const resp = await fetch(`${API_BASE}?controller=DietPlan&action=obtenirTous`);
-            const data = await resp.json();
-            if (data.success) {
-                allPlans = data.plans;
-                let html = '<table class="table"><thead><tr><th>Titre</th><th>Objectif</th><th>Durée</th><th>Calories</th><th>Niveau</th><th>Statut</th><th>Actions</th></tr></thead><tbody>';
-                data.plans.forEach(p => {
-                    html += `<tr>
-                        <td><strong>${p.title}</strong></td>
-                        <td>${p.goal}</td>
-                        <td>${p.duration_days}j</td>
-                        <td>${p.target_calories_per_day}</td>
-                        <td><span class="badge bg-success">${p.level}</span></td>
-                        <td><span class="badge ${p.status === 'ACTIVE' ? 'bg-success' : 'bg-warning'}">${p.status}</span></td>
-                        <td>
-                            <button class="btn btn-info btn-sm" onclick="editPlan(${p.id})">✎</button>
-                            <button class="btn btn-danger btn-sm" onclick="deletePlan(${p.id})">✗</button>
-                        </td>
-                    </tr>`;
-                });
-                document.getElementById('plans-list').innerHTML = html + '</tbody></table>';
+                renderCharts(pStats, rStats);
+            } catch (e) { 
+                console.error(e);
+                showToast("Erreur lors du chargement du dashboard", "error");
+            } finally {
+                toggleSpinner(false);
             }
         }
 
+        function renderCharts(pStats, rStats) {
+            if (charts.levels) charts.levels.destroy();
+            if (charts.meals) charts.meals.destroy();
+
+            const levelCtx = document.getElementById('chart-levels').getContext('2d');
+            charts.levels = new Chart(levelCtx, {
+                type: 'pie',
+                data: {
+                    labels: pStats.levels.map(l => l.label),
+                    datasets: [{
+                        data: pStats.levels.map(l => l.value),
+                        backgroundColor: ['#2e7d32', '#66bb6a', '#a5d6a7', '#c8e6c9']
+                    }]
+                },
+                options: { maintainAspectRatio: false }
+            });
+
+            const mealCtx = document.getElementById('chart-meals').getContext('2d');
+            charts.meals = new Chart(mealCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: rStats.meals.map(m => m.label),
+                    datasets: [{
+                        data: rStats.meals.map(m => m.value),
+                        backgroundColor: ['#ff9800', '#2196f3', '#4caf50', '#9c27b0']
+                    }]
+                },
+                options: { maintainAspectRatio: false }
+            });
+        }
+
+        // --- PLANS ---
+        let allPlans = [];
+        async function loadPlans() {
+            toggleSpinner(true);
+            const { search, sort, order } = state.plans;
+            try {
+                const resp = await fetch(`${API_BASE}?controller=DietPlan&action=obtenirTous&search=${search}&sort=${sort}&order=${order}`);
+                const data = await resp.json();
+                if (data.success) {
+                    allPlans = data.plans;
+                    let html = `<table class="table">
+                        <thead>
+                            <tr>
+                                <th class="${getSortClass('plans', 'title')}" onclick="toggleSort('plans', 'title')">Titre</th>
+                                <th class="${getSortClass('plans', 'goal')}" onclick="toggleSort('plans', 'goal')">Objectif</th>
+                                <th class="${getSortClass('plans', 'duration_days')}" onclick="toggleSort('plans', 'duration_days')">Durée</th>
+                                <th class="${getSortClass('plans', 'target_calories_per_day')}" onclick="toggleSort('plans', 'target_calories_per_day')">Calories</th>
+                                <th class="${getSortClass('plans', 'level')}" onclick="toggleSort('plans', 'level')">Niveau</th>
+                                <th class="${getSortClass('plans', 'status')}" onclick="toggleSort('plans', 'status')">Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                    
+                    data.plans.forEach(p => {
+                        html += `<tr>
+                            <td><strong>${p.title}</strong></td>
+                            <td>${p.goal}</td>
+                            <td>${p.duration_days}j</td>
+                            <td>${p.target_calories_per_day}</td>
+                            <td><span class="badge bg-success">${p.level}</span></td>
+                            <td><span class="badge ${p.status === 'ACTIVE' ? 'bg-success' : 'bg-warning'}">${p.status}</span></td>
+                            <td>
+                                <button class="btn btn-info btn-sm" onclick="editPlan(${p.id})">✎</button>
+                                <button class="btn btn-danger btn-sm" onclick="deletePlan(${p.id})">✗</button>
+                                <button class="btn btn-primary btn-sm" style="background:#444" onclick="exportPlanPDF(${p.id})">PDF</button>
+                            </td>
+                        </tr>`;
+                    });
+                    document.getElementById('plans-list').innerHTML = html + '</tbody></table>';
+                }
+            } catch (e) { showToast("Erreur lors du chargement des programmes", "error"); }
+            finally { toggleSpinner(false); }
+        }
+
+        // ... Edit, Delete, Modal Plan ...
         async function editPlan(id) {
             const p = allPlans.find(x => x.id == id);
             if (!p) return;
@@ -340,20 +512,25 @@
 
         async function deletePlan(id) {
             if (confirm('Supprimer ce programme et ses recettes ?')) {
-                await fetch(`${API_BASE}?controller=DietPlan&action=supprimer&id=${id}`, { method: 'DELETE' });
-                loadPlans(); loadDashboard();
+                toggleSpinner(true);
+                try {
+                    await fetch(`${API_BASE}?controller=DietPlan&action=supprimer&id=${id}`, { method: 'DELETE' });
+                    showToast("Programme supprimé avec succès");
+                    loadPlans(); loadDashboard();
+                } catch(e) { showToast("Erreur lors de la suppression", "error"); }
+                finally { toggleSpinner(false); }
             }
         }
 
         async function openPlanModal() {
             document.getElementById('plan-id').value = '';
             document.getElementById('plan-form').reset();
+            document.getElementById('plan-modal-title').textContent = 'Nouveau Programme';
             document.getElementById('plan-modal').classList.add('show');
         }
 
         document.getElementById('plan-form').onsubmit = async (e) => {
             e.preventDefault();
-            if (!validerPlan()) return;
             const id = document.getElementById('plan-id').value;
             const data = {
                 title: document.getElementById('plan-title').value,
@@ -363,41 +540,73 @@
                 level: document.getElementById('plan-level').value,
                 status: document.getElementById('plan-status').value
             };
-            const url = id ? `${API_BASE}?controller=DietPlan&action=mettre_a_jour&id=${id}` : `${API_BASE}?controller=DietPlan&action=creer`;
-            await fetch(url, { method: id ? 'PUT' : 'POST', body: JSON.stringify(data) });
-            closeModal('plan-modal'); loadPlans();
+
+            const error = validatePlanData(data);
+            if (error) { showToast(error, "error"); return; }
+
+            toggleSpinner(true);
+            try {
+                const url = id ? `${API_BASE}?controller=DietPlan&action=mettre_a_jour&id=${id}` : `${API_BASE}?controller=DietPlan&action=creer`;
+                const resp = await fetch(url, { method: id ? 'PUT' : 'POST', body: JSON.stringify(data) });
+                const res = await resp.json();
+                if (res.success) {
+                    showToast(id ? "Programme mis à jour" : "Programme créé");
+                    closeModal('plan-modal'); 
+                    loadPlans(); loadDashboard();
+                } else { showToast(res.message, "error"); }
+            } catch(e) { showToast("Erreur serveur", "error"); }
+            finally { toggleSpinner(false); }
         };
 
-        // RECIPES
+        // --- RECIPES ---
         let allRecipesList = [];
         async function loadRecipes() {
-            const resp = await fetch(`${API_BASE}?controller=Recipe&action=obtenirTous`);
-            const data = await resp.json();
-            if (data.success) {
-                allRecipesList = data.recipes;
-                let html = '<table class="table"><thead><tr><th>Nom</th><th>Programme</th><th>Type</th><th>Jour</th><th>Calories</th><th>Macros (P/G/L)</th><th>Actions</th></tr></thead><tbody>';
-                data.recipes.forEach(r => {
-                    html += `<tr>
-                        <td><strong>${r.name}</strong></td>
-                        <td>${r.diet_plan_title}</td>
-                        <td>${r.meal_type}</td>
-                        <td>J-${r.day_number}</td>
-                        <td>${r.calories}</td>
-                        <td>${r.proteins}/${r.carbs}/${r.fats}</td>
-                        <td>
-                            <button class="btn btn-info btn-sm" onclick="editRecipe(${r.id})">✎</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteRecipe(${r.id})">✗</button>
-                        </td>
-                    </tr>`;
-                });
-                document.getElementById('recipes-list').innerHTML = html + '</tbody></table>';
-            }
+            toggleSpinner(true);
+            const { search, sort, order } = state.recipes;
+            try {
+                const resp = await fetch(`${API_BASE}?controller=Recipe&action=obtenirTous&search=${search}&sort=${sort}&order=${order}`);
+                const data = await resp.json();
+                if (data.success) {
+                    allRecipesList = data.recipes;
+                    let html = `<table class="table">
+                        <thead>
+                            <tr>
+                                <th class="${getSortClass('recipes', 'r.name')}" onclick="toggleSort('recipes', 'r.name')">Nom</th>
+                                <th class="${getSortClass('recipes', 'diet_plan_title')}" onclick="toggleSort('recipes', 'diet_plan_title')">Programme</th>
+                                <th class="${getSortClass('recipes', 'r.meal_type')}" onclick="toggleSort('recipes', 'r.meal_type')">Type</th>
+                                <th class="${getSortClass('recipes', 'r.day_number')}" onclick="toggleSort('recipes', 'r.day_number')">Jour</th>
+                                <th class="${getSortClass('recipes', 'r.calories')}" onclick="toggleSort('recipes', 'r.calories')">Calories</th>
+                                <th>Macros</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                    
+                    data.recipes.forEach(r => {
+                        html += `<tr>
+                            <td><strong>${r.name}</strong></td>
+                            <td>${r.diet_plan_title}</td>
+                            <td>${r.meal_type}</td>
+                            <td>J-${r.day_number}</td>
+                            <td>${r.calories}</td>
+                            <td>${r.proteins}/${r.carbs}/${r.fats}</td>
+                            <td>
+                                <button class="btn btn-info btn-sm" onclick="editRecipe(${r.id})">✎</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteRecipe(${r.id})">✗</button>
+                                <button class="btn btn-primary btn-sm" style="background:#444" onclick="exportRecipePDF(${r.id})">PDF</button>
+                            </td>
+                        </tr>`;
+                    });
+                    document.getElementById('recipes-list').innerHTML = html + '</tbody></table>';
+                }
+            } catch (e) { showToast("Erreur lors du chargement des recettes", "error"); }
+            finally { toggleSpinner(false); }
         }
 
         async function editRecipe(id) {
             const r = allRecipesList.find(x => x.id == id);
             if (!r) return;
-            await openRecipeModal(); // Load plans
+            await openRecipeModal();
             document.getElementById('recipe-id').value = r.id;
             document.getElementById('recipe-name').value = r.name;
             document.getElementById('recipe-plan').value = r.diet_plan_id;
@@ -413,8 +622,13 @@
 
         async function deleteRecipe(id) {
             if (confirm('Supprimer cette recette ?')) {
-                await fetch(`${API_BASE}?controller=Recipe&action=supprimer&id=${id}`, { method: 'DELETE' });
-                loadRecipes(); loadDashboard();
+                toggleSpinner(true);
+                try {
+                    await fetch(`${API_BASE}?controller=Recipe&action=supprimer&id=${id}`, { method: 'DELETE' });
+                    showToast("Recette supprimée");
+                    loadRecipes(); loadDashboard();
+                } catch(e) { showToast("Erreur suppression", "error"); }
+                finally { toggleSpinner(false); }
             }
         }
 
@@ -422,15 +636,16 @@
             const pRes = await fetch(`${API_BASE}?controller=DietPlan&action=obtenirTous`);
             const pData = await pRes.json();
             if (pData.success) {
-                document.getElementById('recipe-plan').innerHTML = pData.plans.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
+                document.getElementById('recipe-plan').innerHTML = '<option value="">Choisir un programme...</option>' + pData.plans.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
             }
+            document.getElementById('recipe-id').value = '';
             document.getElementById('recipe-form').reset();
+            document.getElementById('recipe-modal-title').textContent = 'Nouvelle Recette';
             document.getElementById('recipe-modal').classList.add('show');
         }
 
         document.getElementById('recipe-form').onsubmit = async (e) => {
             e.preventDefault();
-            if (!validerRecette()) return;
             const id = document.getElementById('recipe-id').value;
             const data = {
                 name: document.getElementById('recipe-name').value,
@@ -442,35 +657,128 @@
                 carbs: document.getElementById('recipe-carb').value,
                 fats: document.getElementById('recipe-fat').value
             };
-            const url = id ? `${API_BASE}?controller=Recipe&action=mettre_a_jour&id=${id}` : `${API_BASE}?controller=Recipe&action=creer`;
-            await fetch(url, { method: id ? 'PUT' : 'POST', body: JSON.stringify(data) });
-            closeModal('recipe-modal'); loadRecipes();
+
+            const error = validateRecipeData(data);
+            if (error) { showToast(error, "error"); return; }
+
+            toggleSpinner(true);
+            try {
+                const url = id ? `${API_BASE}?controller=Recipe&action=mettre_a_jour&id=${id}` : `${API_BASE}?controller=Recipe&action=creer`;
+                const resp = await fetch(url, { method: id ? 'PUT' : 'POST', body: JSON.stringify(data) });
+                const res = await resp.json();
+                if (res.success) {
+                    showToast(id ? "Recette mise à jour" : "Recette créée");
+                    closeModal('recipe-modal'); loadRecipes(); loadDashboard();
+                }
+            } catch(e) { showToast("Erreur serveur", "error"); }
+            finally { toggleSpinner(false); }
         }
 
-        // PAGES
+        // --- PDF EXPORT ---
+        function exportPlanPDF(id) {
+            const p = allPlans.find(x => x.id == id);
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(22);
+            doc.setTextColor(46, 125, 50);
+            doc.text("RAPPORT DE PROGRAMME DIÉTÉTIQUE", 20, 20);
+            
+            doc.setFontSize(12);
+            doc.setTextColor(100);
+            doc.text(`Date du rapport : ${new Date().toLocaleDateString()}`, 20, 30);
+            
+            doc.setDrawColor(46, 125, 50);
+            doc.line(20, 35, 190, 35);
+            
+            doc.setFontSize(16);
+            doc.setTextColor(0);
+            doc.text(`Titre : ${p.title}`, 20, 50);
+            doc.text(`Objectif : ${p.goal}`, 20, 60);
+            doc.text(`Durée : ${p.duration_days} jours`, 20, 70);
+            doc.text(`Cible calorique : ${p.target_calories_per_day} kcal/jour`, 20, 80);
+            doc.text(`Niveau : ${p.level}`, 20, 90);
+            doc.text(`Statut : ${p.status}`, 20, 100);
+
+            doc.save(`Programme_${p.title.replace(/\s+/g, '_')}.pdf`);
+            showToast("PDF généré avec succès");
+        }
+
+        function exportRecipePDF(id) {
+            const r = allRecipesList.find(x => x.id == id);
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(22);
+            doc.setTextColor(46, 125, 50);
+            doc.text("FICHE RECETTE ASTERIA", 20, 20);
+            
+            doc.setFontSize(16);
+            doc.setTextColor(0);
+            doc.text(`Nom : ${r.name}`, 20, 40);
+            doc.text(`Type : ${r.meal_type}`, 20, 50);
+            doc.text(`Programme : ${r.diet_plan_title}`, 20, 60);
+            doc.text(`Jour : J-${r.day_number}`, 20, 70);
+            
+            doc.autoTable({
+                startY: 80,
+                head: [['Nutriment', 'Valeur']],
+                body: [
+                    ['Calories', `${r.calories} kcal`],
+                    ['Protéines', `${r.proteins} g`],
+                    ['Glucides', `${r.carbs} g`],
+                    ['Lipides', `${r.fats} g`]
+                ],
+                theme: 'striped',
+                headStyles: { fillColor: [46, 125, 50] }
+            });
+
+            doc.save(`Recette_${r.name.replace(/\s+/g, '_')}.pdf`);
+            showToast("PDF généré avec succès");
+        }
+
+        // --- PAGES ---
         async function loadPages() {
-            const resp = await fetch(`${API_BASE}?controller=StaticPage&action=obtenirTous`);
-            const data = await resp.json();
-            if (data.success) {
-                let html = '<table class="table"><thead><tr><th>Slug</th><th>Titre</th><th>Type</th><th>Actions</th></tr></thead><tbody>';
-                data.pages.forEach(p => {
-                    html += `<tr>
-                        <td><code>${p.slug}</code></td>
-                        <td><strong>${p.title}</strong></td>
-                        <td><span class="badge ${p.type === 'FRONT' ? 'bg-success' : 'bg-warning'}">${p.type}</span></td>
-                        <td>
-                            <button class="btn btn-danger btn-sm" onclick="deletePage(${p.id})">✗</button>
-                        </td>
-                    </tr>`;
-                });
-                document.getElementById('pages-list').innerHTML = html + '</tbody></table>';
-            }
+            toggleSpinner(true);
+            const { search, sort, order } = state.pages;
+            try {
+                const resp = await fetch(`${API_BASE}?controller=StaticPage&action=obtenirTous&search=${search}&sort=${sort}&order=${order}`);
+                const data = await resp.json();
+                if (data.success) {
+                    let html = `<table class="table">
+                        <thead>
+                            <tr>
+                                <th class="${getSortClass('pages', 'slug')}" onclick="toggleSort('pages', 'slug')">Slug</th>
+                                <th class="${getSortClass('pages', 'title')}" onclick="toggleSort('pages', 'title')">Titre</th>
+                                <th class="${getSortClass('pages', 'type')}" onclick="toggleSort('pages', 'type')">Type</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                    
+                    data.pages.forEach(p => {
+                        html += `<tr>
+                            <td><code>${p.slug}</code></td>
+                            <td><strong>${p.title}</strong></td>
+                            <td><span class="badge ${p.type === 'FRONT' ? 'bg-success' : 'bg-warning'}">${p.type}</span></td>
+                            <td>
+                                <button class="btn btn-danger btn-sm" onclick="deletePage(${p.id})">✗</button>
+                            </td>
+                        </tr>`;
+                    });
+                    document.getElementById('pages-list').innerHTML = html + '</tbody></table>';
+                }
+            } catch(e) { showToast("Erreur lors du chargement des pages", "error"); }
+            finally { toggleSpinner(false); }
         }
 
         async function deletePage(id) {
             if (confirm('Supprimer cette page ?')) {
+                toggleSpinner(true);
                 await fetch(`${API_BASE}?controller=StaticPage&action=supprimer&id=${id}`, { method: 'DELETE' });
+                showToast("Page supprimée");
                 loadPages(); loadDashboard();
+                toggleSpinner(false);
             }
         }
 

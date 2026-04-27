@@ -1,7 +1,7 @@
 <?php
 /**
  * Dashboard Client - Catalogue Nutrition et Régimes
- * Style ECOSAVE (Vert écologique)
+ * Style asteria (Vert écologique)
  * Point d'accès: http://localhost/gestion-allergies/app/views/client-dashboard.php
  */
 ?>
@@ -10,7 +10,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoSave - Nutrition durable</title>
+    <title>asteria - Nutrition durable</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #2e7d32; --accent: #ffb300; --bg: #f8faf8; }
@@ -66,7 +66,7 @@
 </head>
 <body>
     <header>
-        <div class="logo">Asteria</div>
+        <div class="logo">🌱 ASTERIA</div>
         <a href="admin.php" class="nav-link">⚙️ Accès Admin</a>
     </header>
 
@@ -87,7 +87,7 @@
 
     <footer>
         <div class="container" style="padding:0">
-            <p style="font-weight: 800; font-size: 24px; margin-bottom: 20px;">ECOSAVE</p>
+            <p style="font-weight: 800; font-size: 24px; margin-bottom: 20px;">ASTERIA</p>
             <p style="opacity: 0.6; font-weight: 400;">La plateforme leader de la nutrition durable et responsable.</p>
         </div>
     </footer>

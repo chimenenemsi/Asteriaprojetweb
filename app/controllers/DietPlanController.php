@@ -3,15 +3,60 @@ use Config\Database;
 
 class DietPlanController
 {
-    // ===== READ ALL =====
+    // ===== READ ALL with Search & Sort =====
     public static function obtenirTous()
     {
         try {
             $pdo = Database::getConnexion();
-            $stmt = $pdo->query("SELECT * FROM diet_plans ORDER BY id DESC");
+            
+            $search = $_GET['search'] ?? '';
+            $sort = $_GET['sort'] ?? 'id';
+            $order = $_GET['order'] ?? 'DESC';
+
+            // Colonnes autorisées pour le tri
+            $allowedSorts = ['id', 'title', 'goal', 'duration_days', 'target_calories_per_day', 'level', 'status'];
+            if (!in_array($sort, $allowedSorts)) $sort = 'id';
+            $order = (strtoupper($order) === 'ASC') ? 'ASC' : 'DESC';
+
+            $sql = "SELECT * FROM diet_plans WHERE 1=1";
+            $params = [];
+
+            if (!empty($search)) {
+                $sql .= " AND (title LIKE :search OR goal LIKE :search OR level LIKE :search OR status LIKE :search)";
+                $params[':search'] = "%$search%";
+            }
+
+            $sql .= " ORDER BY $sort $order";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
             $plans = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             echo json_encode(['success' => true, 'plans' => $plans]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    // ===== STATS for Charts =====
+    public static function obtenirStats()
+    {
+        try {
+            $pdo = Database::getConnexion();
+            
+            // Stats par niveau
+            $sqlLevel = "SELECT level as label, COUNT(*) as value FROM diet_plans GROUP BY level";
+            $levels = $pdo->query($sqlLevel)->fetchAll(PDO::FETCH_ASSOC);
+
+            // Stats par statut
+            $sqlStatus = "SELECT status as label, COUNT(*) as value FROM diet_plans GROUP BY status";
+            $statuses = $pdo->query($sqlStatus)->fetchAll(PDO::FETCH_ASSOC);
+
+            echo json_encode([
+                'success' => true, 
+                'levels' => $levels,
+                'statuses' => $statuses
+            ]);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }

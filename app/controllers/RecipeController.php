@@ -3,19 +3,58 @@ use Config\Database;
 
 class RecipeController
 {
-    // ===== READ ALL =====
+    // ===== READ ALL with Search & Sort =====
     public static function obtenirTous()
     {
         try {
             $pdo = Database::getConnexion();
+            
+            $search = $_GET['search'] ?? '';
+            $sort = $_GET['sort'] ?? 'r.id';
+            $order = $_GET['order'] ?? 'DESC';
+
+            // Colonnes autorisées pour le tri
+            $allowedSorts = ['r.id', 'r.name', 'diet_plan_title', 'r.meal_type', 'r.day_number', 'r.calories'];
+            if (!in_array($sort, $allowedSorts)) $sort = 'r.id';
+            $order = (strtoupper($order) === 'ASC') ? 'ASC' : 'DESC';
+
             $sql = "SELECT r.*, d.title as diet_plan_title 
                     FROM recipes r 
                     LEFT JOIN diet_plans d ON r.diet_plan_id = d.id 
-                    ORDER BY r.id DESC";
-            $stmt = $pdo->query($sql);
+                    WHERE 1=1";
+            $params = [];
+
+            if (!empty($search)) {
+                $sql .= " AND (r.name LIKE :search OR d.title LIKE :search OR r.meal_type LIKE :search)";
+                $params[':search'] = "%$search%";
+            }
+
+            $sql .= " ORDER BY $sort $order";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
             $recipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             echo json_encode(['success' => true, 'recipes' => $recipes]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    // ===== STATS for Charts =====
+    public static function obtenirStats()
+    {
+        try {
+            $pdo = Database::getConnexion();
+            
+            // Stats par type de repas
+            $sqlMeal = "SELECT meal_type as label, COUNT(*) as value FROM recipes GROUP BY meal_type";
+            $meals = $pdo->query($sqlMeal)->fetchAll(PDO::FETCH_ASSOC);
+
+            echo json_encode([
+                'success' => true, 
+                'meals' => $meals
+            ]);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
