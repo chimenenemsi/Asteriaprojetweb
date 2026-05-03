@@ -2,7 +2,7 @@
 /**
  * Dashboard Admin - Gestion de Nutrition (Régimes & Recettes)
  * Style asteria (Vert écologique)
- * Point d'accès: http://localhost/gestion-diet/app/views/admin.php
+ * Point d'accès: http://localhost/gestion-allergies/app/views/admin.php
  */
 ?>
 <!DOCTYPE html>
@@ -106,7 +106,7 @@
         <a href="#" class="active" onclick="showSection('dashboard', this)"><span>📊</span> Dashboard</a>
         <a href="#" onclick="showSection('plans', this)"><span>📅</span> Programmes</a>
         <a href="#" onclick="showSection('recipes', this)"><span>🥗</span> Recettes</a>
-        <a href="#" onclick="showSection('pages', this)"><span>📄</span> Pages Statiques</a>
+        
     </div>
 
     <div class="main">
@@ -267,7 +267,7 @@
                     </div>
                     <div class="form-group">
                         <label>Programme Associé *</label>
-                        <select id="recipe-plan" class="form-control"></select>
+                        <select id="recipe-plan" class="form-control" onchange="getAiSuggestion(this.value)"></select>
                     </div>
                     <div style="display: flex; gap: 20px;">
                         <div class="form-group" style="flex:1">
@@ -296,6 +296,26 @@
                     <button type="submit" class="btn btn-primary">Enregistrer</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- MODAL QR CODE -->
+    <div id="qr-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header">
+                <h5>QR Code de la Recette</h5>
+                <button style="background:none; border:none; color:white; font-size:28px; cursor:pointer;" onclick="closeModal('qr-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; justify-content: center; margin-bottom: 20px; padding: 20px; background: white; border-radius: 15px;">
+                    <img id="qrcode-img" src="" alt="QR Code" style="width: 200px; height: 200px; display: none;">
+                    <div id="qr-loading" class="spinner-icon" style="width: 30px; height: 30px;"></div>
+                </div>
+                <p id="qr-recipe-name" style="font-weight: 800; color: var(--primary); font-size: 1.2rem;"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" style="width:100%" onclick="closeModal('qr-modal')">Fermer</button>
+            </div>
         </div>
     </div>
 
@@ -386,38 +406,49 @@
         // --- DASHBOARD & CHARTS ---
         let charts = {};
         async function loadDashboard() {
-            toggleSpinner(true);
-            try {
-                const [pRes, rRes, pgRes, pStatsRes, rStatsRes] = await Promise.all([
-                    fetch(`${API_BASE}?controller=DietPlan&action=obtenirTous`),
-                    fetch(`${API_BASE}?controller=Recipe&action=obtenirTous`),
-                    fetch(`${API_BASE}?controller=StaticPage&action=obtenirTous`),
-                    fetch(`${API_BASE}?controller=DietPlan&action=obtenirStats`),
-                    fetch(`${API_BASE}?controller=Recipe&action=obtenirStats`)
-                ]);
-                
-                const pData = await pRes.json();
-                const rData = await rRes.json();
-                const pgData = await pgRes.json();
-                const pStats = await pStatsRes.json();
-                const rStats = await rStatsRes.json();
+    toggleSpinner(true);
+    try {
+        const [pRes, rRes, pStatsRes, rStatsRes] = await Promise.all([
+            fetch(`${API_BASE}?controller=DietPlan&action=obtenirTous`),
+            fetch(`${API_BASE}?controller=Recipe&action=obtenirTous`),
+            fetch(`${API_BASE}?controller=DietPlan&action=obtenirStats`),
+            fetch(`${API_BASE}?controller=Recipe&action=obtenirStats`)
+        ]);
+        
+        const pData = await pRes.json();
+        const rData = await rRes.json();
+        const pStats = await pStatsRes.json();
+        const rStats = await rStatsRes.json();
 
-                if (pData.success) {
-                    document.getElementById('stat-active-plans').textContent = pData.plans.filter(p => p.status === 'ACTIVE').length;
-                    const latest = pData.plans.slice(0, 5);
-                    document.getElementById('latest-plans').innerHTML = `<table class="table">` + latest.map(p => `<tr><td><strong>${p.title}</strong></td><td><span class="badge bg-success">${p.level}</span></td></tr>`).join('') + `</table>`;
-                }
-                if (rData.success) document.getElementById('stat-total-recipes').textContent = rData.recipes.length;
-                if (pgData.success) document.getElementById('stat-total-pages').textContent = pgData.pages.length;
+        if (pData.success) {
+            document.getElementById('stat-active-plans').textContent =
+                pData.plans.filter(p => p.status === 'ACTIVE').length;
 
-                renderCharts(pStats, rStats);
-            } catch (e) { 
-                console.error(e);
-                showToast("Erreur lors du chargement du dashboard", "error");
-            } finally {
-                toggleSpinner(false);
-            }
+            const latest = pData.plans.slice(0, 5);
+            document.getElementById('latest-plans').innerHTML =
+                `<table class="table">` +
+                latest.map(p => `
+                    <tr>
+                        <td><strong>${p.title}</strong></td>
+                        <td><span class="badge bg-success">${p.level}</span></td>
+                    </tr>
+                `).join('') +
+                `</table>`;
         }
+
+        if (rData.success) {
+            document.getElementById('stat-total-recipes').textContent = rData.recipes.length;
+        }
+
+        renderCharts(pStats, rStats);
+
+    } catch (e) {
+        console.error(e);
+        showToast("Erreur dashboard", "error");
+    } finally {
+        toggleSpinner(false);
+    }
+}
 
         function renderCharts(pStats, rStats) {
             if (charts.levels) charts.levels.destroy();
@@ -594,6 +625,7 @@
                                 <button class="btn btn-info btn-sm" onclick="editRecipe(${r.id})">✎</button>
                                 <button class="btn btn-danger btn-sm" onclick="deleteRecipe(${r.id})">✗</button>
                                 <button class="btn btn-primary btn-sm" style="background:#444" onclick="exportRecipePDF(${r.id})">PDF</button>
+                                <button class="btn btn-warning btn-sm" onclick="showQRCode(${r.id})">QR</button>
                             </td>
                         </tr>`;
                     });
@@ -674,6 +706,34 @@
             finally { toggleSpinner(false); }
         }
 
+        async function getAiSuggestion(planId) {
+            if (!planId) return;
+            
+            toggleSpinner(true);
+            try {
+                const resp = await fetch(`${API_BASE}?controller=OpenAI&action=proposerRecette&plan_id=${planId}`);
+                const data = await resp.json();
+                
+                if (data.success && data.recipe) {
+                    const r = data.recipe;
+                    document.getElementById('recipe-name').value = r.name || '';
+                    document.getElementById('recipe-meal').value = r.meal_type || 'LUNCH';
+                    document.getElementById('recipe-cal').value = r.calories || 0;
+                    document.getElementById('recipe-prot').value = r.proteins || 0;
+                    document.getElementById('recipe-carb').value = r.carbs || 0;
+                    document.getElementById('recipe-fat').value = r.fats || 0;
+                    showToast("✨ IA : Recette suggérée avec succès !");
+                } else {
+                    showToast(data.message || "L'IA n'a pas pu générer de recette", "error");
+                }
+            } catch (e) {
+                console.error(e);
+                showToast("Erreur lors de l'appel à l'IA", "error");
+            } finally {
+                toggleSpinner(false);
+            }
+        }
+
         // --- PDF EXPORT ---
         function exportPlanPDF(id) {
             const p = allPlans.find(x => x.id == id);
@@ -737,12 +797,42 @@
             showToast("PDF généré avec succès");
         }
 
+        function showQRCode(id) {
+            const r = allRecipesList.find(x => x.id == id);
+            if (!r) {
+                showToast("Recette non trouvée", "error");
+                return;
+            }
+
+            const img = document.getElementById('qrcode-img');
+            const loader = document.getElementById('qr-loading');
+            
+            img.style.display = 'none';
+            loader.style.display = 'block';
+
+            const content = `RECETTE: ${r.name}\nCALORIES: ${r.calories} kcal\nPROG: ${r.diet_plan_title}`;
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(content)}&color=2e7d32`;
+            
+            img.onload = () => {
+                img.style.display = 'block';
+                loader.style.display = 'none';
+            };
+            
+            img.onerror = () => {
+                loader.style.display = 'none';
+                showToast("Erreur lors du chargement du QR code", "error");
+            };
+
+            img.src = qrUrl;
+            document.getElementById('qr-recipe-name').textContent = r.name;
+            document.getElementById('qr-modal').classList.add('show');
+        }
+
         // --- PAGES ---
         async function loadPages() {
             toggleSpinner(true);
             const { search, sort, order } = state.pages;
             try {
-                const resp = await fetch(`${API_BASE}?controller=StaticPage&action=obtenirTous&search=${search}&sort=${sort}&order=${order}`);
                 const data = await resp.json();
                 if (data.success) {
                     let html = `<table class="table">
@@ -775,7 +865,6 @@
         async function deletePage(id) {
             if (confirm('Supprimer cette page ?')) {
                 toggleSpinner(true);
-                await fetch(`${API_BASE}?controller=StaticPage&action=supprimer&id=${id}`, { method: 'DELETE' });
                 showToast("Page supprimée");
                 loadPages(); loadDashboard();
                 toggleSpinner(false);

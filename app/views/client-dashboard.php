@@ -2,7 +2,7 @@
 /**
  * Dashboard Client - Catalogue Nutrition et Régimes
  * Style asteria (Vert écologique)
- * Point d'accès: http://localhost/gestion-allergies/app/views/client-dashboard.php
+ * Point d'accès: http://localhost/gestion-diet/app/views/client-dashboard.php
  */
 ?>
 <!DOCTYPE html>
