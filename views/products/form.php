@@ -18,7 +18,7 @@ $action = $mode === 'edit'
 </div>
 
 <div class="card">
-    <form method="post" action="<?= htmlspecialchars($action, ENT_QUOTES, 'UTF-8') ?>" class="form-shell">
+    <form method="post" action="<?= htmlspecialchars($action, ENT_QUOTES, 'UTF-8') ?>" novalidate class="form-shell">
         <div class="form-section">
             <h2>Catalog Details</h2>
             <p>Choose the category and define the product identity clearly.</p>
@@ -26,7 +26,7 @@ $action = $mode === 'edit'
                 <div class="col-6">
                     <div class="field">
                         <label for="product-category">Category</label>
-                        <select id="product-category" name="product_category_id" required>
+                        <select id="product-category" name="product_category_id">
                             <option value="">Select category</option>
                             <?php foreach (($categories ?? []) as $category): ?>
                                 <option value="<?= (int) $category['id'] ?>" <?= (string) ($values['product_category_id'] ?? '') === (string) $category['id'] ? 'selected' : '' ?>>
@@ -40,14 +40,14 @@ $action = $mode === 'edit'
                 <div class="col-6">
                     <div class="field">
                         <label for="product-name">Name</label>
-                        <input id="product-name" type="text" name="name" minlength="2" maxlength="150" required placeholder="Product name" value="<?= htmlspecialchars((string) ($values['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                        <input id="product-name" type="text" name="name" placeholder="Product name" value="<?= htmlspecialchars((string) ($values['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                         <?php if (isset($errors['name'])): ?><div class="error"><?= htmlspecialchars($errors['name'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="field">
                         <label for="product-sku">SKU</label>
-                        <input id="product-sku" type="text" name="sku" minlength="3" maxlength="80" pattern="[A-Za-z0-9][A-Za-z0-9_-]{2,79}" required placeholder="ABC-123" value="<?= htmlspecialchars((string) ($values['sku'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                        <input id="product-sku" type="text" name="sku" placeholder="ABC-123" value="<?= htmlspecialchars((string) ($values['sku'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                         <div class="field-help">Use letters, numbers, dashes, or underscores.</div>
                         <?php if (isset($errors['sku'])): ?><div class="error"><?= htmlspecialchars($errors['sku'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
                     </div>
@@ -55,7 +55,7 @@ $action = $mode === 'edit'
                 <div class="col-6">
                     <div class="field">
                         <label for="product-status">Status</label>
-                        <select id="product-status" name="status" required>
+                        <select id="product-status" name="status">
                             <?php foreach (['ACTIVE', 'DRAFT', 'OUT_OF_STOCK'] as $status): ?>
                                 <option value="<?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?>" <?= ($values['status'] ?? 'ACTIVE') === $status ? 'selected' : '' ?>><?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?></option>
                             <?php endforeach; ?>
@@ -73,14 +73,14 @@ $action = $mode === 'edit'
                 <div class="col-6">
                     <div class="field">
                         <label for="product-price">Price</label>
-                        <input id="product-price" type="number" step="0.01" min="0.01" name="price" required placeholder="0.00" value="<?= htmlspecialchars((string) ($values['price'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                        <input id="product-price" type="text" inputmode="decimal" name="price" placeholder="0.00" value="<?= htmlspecialchars((string) ($values['price'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                         <?php if (isset($errors['price'])): ?><div class="error"><?= htmlspecialchars($errors['price'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="field">
                         <label for="product-stock">Stock Quantity</label>
-                        <input id="product-stock" type="number" min="0" step="1" name="stock_quantity" required value="<?= htmlspecialchars((string) ($values['stock_quantity'] ?? 0), ENT_QUOTES, 'UTF-8') ?>">
+                        <input id="product-stock" type="text" inputmode="decimal" name="stock_quantity" value="<?= htmlspecialchars((string) ($values['stock_quantity'] ?? 0), ENT_QUOTES, 'UTF-8') ?>">
                         <?php if (isset($errors['stock_quantity'])): ?><div class="error"><?= htmlspecialchars($errors['stock_quantity'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
                     </div>
                 </div>
@@ -92,7 +92,7 @@ $action = $mode === 'edit'
             <p>Add useful details that help users understand what they are ordering.</p>
             <div class="field">
                 <label for="product-description">Description</label>
-                <textarea id="product-description" name="description" rows="5" maxlength="4000" placeholder="Describe the product, materials, size, flavor, or anything the buyer should know."><?= htmlspecialchars((string) ($values['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
+                <textarea id="product-description" name="description" rows="5" placeholder="Describe the product, materials, size, flavor, or anything the buyer should know."><?= htmlspecialchars((string) ($values['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
                 <?php if (isset($errors['description'])): ?><div class="error"><?= htmlspecialchars($errors['description'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
             </div>
         </div>

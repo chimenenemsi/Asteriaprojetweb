@@ -18,7 +18,7 @@ $action = $mode === 'edit'
 </div>
 
 <div class="card">
-    <form method="post" action="<?= htmlspecialchars($action, ENT_QUOTES, 'UTF-8') ?>" class="form-shell">
+    <form method="post" action="<?= htmlspecialchars($action, ENT_QUOTES, 'UTF-8') ?>" novalidate class="form-shell">
         <div class="form-section">
             <h2>Category Details</h2>
             <p>Keep category names short, recognizable, and easy to scan in the catalog.</p>
@@ -26,14 +26,14 @@ $action = $mode === 'edit'
                 <div class="col-6">
                     <div class="field">
                         <label for="category-name">Name</label>
-                        <input id="category-name" type="text" name="name" minlength="2" maxlength="150" required placeholder="Category name" value="<?= htmlspecialchars((string) ($values['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                        <input id="category-name" type="text" name="name" placeholder="Category name" value="<?= htmlspecialchars((string) ($values['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                         <?php if (isset($errors['name'])): ?><div class="error"><?= htmlspecialchars($errors['name'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="field">
                         <label for="category-status">Status</label>
-                        <select id="category-status" name="status" required>
+                        <select id="category-status" name="status">
                             <?php foreach (['ACTIVE', 'INACTIVE'] as $status): ?>
                                 <option value="<?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?>" <?= ($values['status'] ?? 'ACTIVE') === $status ? 'selected' : '' ?>><?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?></option>
                             <?php endforeach; ?>
@@ -44,7 +44,7 @@ $action = $mode === 'edit'
                 <div class="col-12">
                     <div class="field">
                         <label for="category-description">Description</label>
-                        <textarea id="category-description" name="description" rows="5" maxlength="2000" placeholder="Explain what belongs in this category."><?= htmlspecialchars((string) ($values['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
+                        <textarea id="category-description" name="description" rows="5" placeholder="Explain what belongs in this category."><?= htmlspecialchars((string) ($values['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
                         <?php if (isset($errors['description'])): ?><div class="error"><?= htmlspecialchars($errors['description'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
                     </div>
                 </div>

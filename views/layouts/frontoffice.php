@@ -26,7 +26,8 @@
         .monta-brand-text{color:#fff;font-size:24px;font-weight:700;line-height:1}
         .monta-nav{display:flex;flex:1 1 auto;flex-wrap:wrap;justify-content:center;gap:8px}
         .monta-nav a{padding:16px 14px;color:#fff;text-decoration:none;font-size:16px;font-weight:500;transition:opacity .2s ease}
-        .monta-nav a:hover,.monta-nav a.active{opacity:.78}
+        .monta-nav a:hover{opacity:.78}
+        .monta-nav a.active{opacity:1;border-bottom:2px solid #6ca138;padding-bottom:14px}
         .monta-nav-icon{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;color:#fff;text-decoration:none;flex:0 0 auto;font-size:14px}
         .monta-main{padding:44px 0 70px}
         .monta-hero{display:grid;grid-template-columns:1.15fr .85fr;gap:28px;align-items:center;padding:42px;border-radius:34px;background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(255,244,232,.88)),url("<?= htmlspecialchars(asset_url('assets/frontoffice/nutrio.radiantthemes.com/wp-content/uploads/2022/05/banner-bg.jpg'), ENT_QUOTES, 'UTF-8') ?>") center/cover no-repeat;box-shadow:0 24px 60px rgba(21,49,34,.08)}
@@ -126,5 +127,199 @@
     <footer class="monta-footer">
         <div class="monta-shell monta-footer-inner"></div>
     </footer>
+
+    <style>
+        .product-ai-bubble{position:fixed;right:24px;bottom:24px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:12px;font-family:Outfit,"Segoe UI",Arial,sans-serif}
+        .product-ai-toggle{min-width:98px;height:60px;border:0;border-radius:999px;background:linear-gradient(135deg,#6ca138,#2d4a1e);color:#fff;font-size:16px;font-weight:900;letter-spacing:.02em;box-shadow:0 18px 42px rgba(45,74,30,.32);cursor:pointer;padding:0 20px}
+        .product-ai-panel{width:min(380px,calc(100vw - 32px));display:none;overflow:hidden;border-radius:24px;background:#fff;box-shadow:0 24px 70px rgba(21,49,34,.22);border:1px solid rgba(21,49,34,.08)}
+        .product-ai-panel.open{display:block}
+        .product-ai-head{padding:16px 18px;background:#1b2115;color:#fff;display:flex;justify-content:space-between;gap:12px;align-items:center}
+        .product-ai-head strong{display:block;font-size:15px}.product-ai-head span{display:block;font-size:12px;color:rgba(255,255,255,.68);margin-top:2px}
+        .product-ai-close{border:0;background:rgba(255,255,255,.12);color:#fff;border-radius:999px;width:30px;height:30px;cursor:pointer}
+        .product-ai-messages{height:310px;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:linear-gradient(180deg,#faf8f3,#fff)}
+        .product-ai-msg{max-width:88%;padding:11px 14px;border-radius:16px;font-size:14px;line-height:1.55;white-space:pre-wrap}
+        .product-ai-msg.bot{align-self:flex-start;background:#eef6e7;color:#23351c;border-bottom-left-radius:5px}
+        .product-ai-msg.user{align-self:flex-end;background:#6ca138;color:#fff;border-bottom-right-radius:5px}
+        .product-ai-msg.rich{max-width:94%;background:#fff;border:1px solid rgba(108,161,56,.18);box-shadow:0 10px 24px rgba(21,49,34,.08);white-space:normal;padding:12px}
+        .product-ai-title{display:flex;align-items:center;gap:8px;margin:0 0 9px;font-size:14px;font-weight:900;color:#1b2115}
+        .product-ai-section{margin-top:10px;padding:10px 11px;border-radius:15px;background:#f5faef;border:1px solid rgba(108,161,56,.18)}
+        .product-ai-section strong{display:block;margin-bottom:4px;color:#2d4a1e;font-size:13px}
+        .product-ai-products{display:grid;gap:8px;margin-top:8px}
+        .product-ai-card{border-radius:16px;border:1px solid rgba(21,49,34,.08);background:linear-gradient(180deg,#fff,#fbfaf5);padding:11px 12px;box-shadow:0 8px 18px rgba(21,49,34,.06)}
+        .product-ai-card-name{font-weight:900;color:#1b2115;margin-bottom:6px}
+        .product-ai-card-meta{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;color:#60706a}
+        .product-ai-pill{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;background:#eef6e7;color:#385820;font-weight:700}
+        .product-ai-pill.price{background:#1b2115;color:#fff}.product-ai-pill.stock{background:#f5faef;color:#2d4a1e}
+        .product-ai-list{margin:7px 0 0 18px;padding:0}.product-ai-list li{margin:4px 0}
+        .product-ai-typing{display:none;padding:0 16px 10px;color:#60706a;font-size:13px;background:#fff}
+        .product-ai-row{display:flex;gap:8px;padding:12px;border-top:1px solid rgba(21,49,34,.08);background:#fff}
+        .product-ai-row input{flex:1;border-radius:14px;border:1px solid rgba(21,49,34,.14);padding:11px 12px;font-size:14px}
+        .product-ai-row button{border:0;border-radius:14px;background:#6ca138;color:#fff;padding:0 15px;font-weight:700;cursor:pointer}
+        .product-ai-suggestions{display:flex;gap:7px;flex-wrap:wrap;padding:12px 12px 0;background:#fff}
+        .product-ai-chip{border:1px solid rgba(108,161,56,.25);background:#f5faef;color:#34511f;border-radius:999px;padding:7px 10px;font-size:12px;cursor:pointer}
+    </style>
+    <div class="product-ai-bubble" data-product-ai>
+        <div class="product-ai-panel" id="product-ai-panel">
+            <div class="product-ai-head">
+                <div><strong>Asteria Product Assistant</strong><span>Ask Gemini about the live product catalog.</span></div>
+                <button class="product-ai-close" type="button" aria-label="Close product assistant">x</button>
+            </div>
+            <div class="product-ai-suggestions">
+                <button class="product-ai-chip" type="button" data-ai-suggest="What is the cheapest in-stock product?">Cheapest in stock</button>
+                <button class="product-ai-chip" type="button" data-ai-suggest="Suggest products for weight loss under 30 DT.">Weight loss under 30 DT</button>
+                <button class="product-ai-chip" type="button" data-ai-suggest="Which protein products do you recommend?">Protein picks</button>
+            </div>
+            <div class="product-ai-messages" id="product-ai-messages">
+                <div class="product-ai-msg bot">Hi! Tell me your goal or budget and I will recommend products from the Asteria catalog.</div>
+            </div>
+            <div class="product-ai-typing" id="product-ai-typing">Asteria is thinking...</div>
+            <div class="product-ai-row">
+                <input id="product-ai-input" type="text" placeholder="Ask about products, budget, stock...">
+                <button id="product-ai-send" type="button">Send</button>
+            </div>
+        </div>
+        <button class="product-ai-toggle" id="product-ai-toggle" type="button" aria-label="Open product assistant">AI Chat</button>
+    </div>
+    <script>
+    (() => {
+        const panel = document.getElementById('product-ai-panel');
+        const toggle = document.getElementById('product-ai-toggle');
+        const close = document.querySelector('.product-ai-close');
+        const messages = document.getElementById('product-ai-messages');
+        const input = document.getElementById('product-ai-input');
+        const sendButton = document.getElementById('product-ai-send');
+        const typing = document.getElementById('product-ai-typing');
+        const endpoint = '<?= htmlspecialchars(route_url('frontoffice/ai-chat'), ENT_QUOTES, 'UTF-8') ?>';
+        let history = [];
+
+        function addMessage(text, role) {
+            const item = document.createElement('div');
+            item.className = 'product-ai-msg ' + role;
+            if (role === 'bot') {
+                item.classList.add('rich');
+                renderBotReply(item, text || 'No response.');
+            } else {
+                item.textContent = text;
+            }
+            messages.appendChild(item);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function addText(parent, text, className) {
+            const element = document.createElement('div');
+            if (className) element.className = className;
+            element.textContent = text;
+            parent.appendChild(element);
+            return element;
+        }
+
+        function renderBotReply(parent, rawText) {
+            const lines = String(rawText).split(/\n+/).map(line => line.trim()).filter(Boolean);
+            const productLines = [];
+            const normalLines = [];
+            lines.forEach(line => {
+                if (/^-?\s*\[[^\]]+\].+\|.+DT/i.test(line) || (/^-\s*/.test(line) && /\|/.test(line) && /DT/i.test(line))) {
+                    productLines.push(line.replace(/^-\s*/, ''));
+                } else {
+                    normalLines.push(line);
+                }
+            });
+
+            const titleIndex = normalLines.findIndex(line => /^[🎯⭐🛒📦💡✅]/u.test(line));
+            const title = titleIndex >= 0 ? normalLines[titleIndex] : '🛒 Asteria recommendation';
+            addText(parent, title.replace(/^[-*]\s*/, ''), 'product-ai-title');
+
+            let list = null;
+            normalLines.forEach((line, index) => {
+                if (index === titleIndex) return;
+                if (/^[-*]\s+/.test(line)) {
+                    if (!list) {
+                        list = document.createElement('ul');
+                        list.className = 'product-ai-list';
+                        parent.appendChild(list);
+                    }
+                    const li = document.createElement('li');
+                    li.textContent = line.replace(/^[-*]\s+/, '');
+                    list.appendChild(li);
+                    return;
+                }
+                list = null;
+                if (/^[✅💡⚠️⭐🎯]/u.test(line) || /^(why|tip|alternative|best match)/i.test(line)) {
+                    const section = document.createElement('div');
+                    section.className = 'product-ai-section';
+                    section.textContent = line;
+                    parent.appendChild(section);
+                } else {
+                    addText(parent, line, 'product-ai-section');
+                }
+            });
+
+            if (productLines.length) {
+                const wrap = document.createElement('div');
+                wrap.className = 'product-ai-products';
+                productLines.slice(0, 5).forEach(line => wrap.appendChild(renderProductCard(line)));
+                parent.appendChild(wrap);
+            }
+        }
+
+        function renderProductCard(line) {
+            const card = document.createElement('div');
+            card.className = 'product-ai-card';
+            const parts = line.split('|').map(part => part.trim()).filter(Boolean);
+            let name = parts[0] || line;
+            const categoryMatch = name.match(/^\[([^\]]+)\]\s*(.+)$/);
+            let category = '';
+            if (categoryMatch) {
+                category = categoryMatch[1];
+                name = categoryMatch[2];
+            }
+            addText(card, name, 'product-ai-card-name');
+            const meta = document.createElement('div');
+            meta.className = 'product-ai-card-meta';
+            if (category) addPill(meta, category, '');
+            parts.slice(1).forEach(part => {
+                const cls = /DT/i.test(part) ? 'price' : (/stock/i.test(part) ? 'stock' : '');
+                addPill(meta, part, cls);
+            });
+            card.appendChild(meta);
+            return card;
+        }
+
+        function addPill(parent, text, extraClass) {
+            const pill = document.createElement('span');
+            pill.className = 'product-ai-pill' + (extraClass ? ' ' + extraClass : '');
+            pill.textContent = text;
+            parent.appendChild(pill);
+        }
+
+        async function ask(raw) {
+            const message = (raw || input.value || '').trim();
+            if (!message) return;
+            input.value = '';
+            panel.classList.add('open');
+            addMessage(message, 'user');
+            history.push({role: 'user', text: message});
+            typing.style.display = 'block';
+            try {
+                const response = await fetch(endpoint, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({message, history: history.slice(-8)})});
+                const data = await response.json();
+                const reply = data.reply || data.error || 'The assistant could not answer right now.';
+                history.push({role: 'model', text: reply});
+                addMessage(reply, 'bot');
+            } catch (error) {
+                addMessage('Connection error. Please try again.', 'bot');
+            } finally {
+                typing.style.display = 'none';
+            }
+        }
+
+        toggle?.addEventListener('click', () => panel.classList.toggle('open'));
+        close?.addEventListener('click', () => panel.classList.remove('open'));
+        sendButton?.addEventListener('click', () => ask());
+        input?.addEventListener('keydown', (event) => { if (event.key === 'Enter') ask(); });
+        document.querySelectorAll('[data-ai-suggest]').forEach((button) => button.addEventListener('click', () => ask(button.dataset.aiSuggest || '')));
+    })();
+    </script>
+
 </body>
 </html>

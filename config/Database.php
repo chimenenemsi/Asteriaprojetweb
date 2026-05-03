@@ -11,6 +11,8 @@ final class Database
             return self::$connection;
         }
 
+        self::loadDotenv(ROOT_PATH . '/.env');
+
         $host = self::env('ASTERIA_DB_HOST', '127.0.0.1');
         $port = (int) self::env('ASTERIA_DB_PORT', '3306');
         $database = self::env('ASTERIA_DB_NAME', 'asteria');
@@ -67,6 +69,37 @@ final class Database
         foreach ($statements as $statement) {
             if ($statement !== '') {
                 $pdo->exec($statement);
+            }
+        }
+    }
+
+    private static function loadDotenv(string $path): void
+    {
+        if (!is_file($path) || !is_readable($path)) {
+            return;
+        }
+
+        $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($lines === false) {
+            return;
+        }
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '' || str_starts_with($line, '#') || !str_contains($line, '=')) {
+                continue;
+            }
+
+            [$name, $value] = array_map('trim', explode('=', $line, 2));
+            if ($name === '') {
+                continue;
+            }
+
+            $value = trim($value, "\"'");
+            if (getenv($name) === false) {
+                putenv($name . '=' . $value);
+                $_ENV[$name] = $value;
+                $_SERVER[$name] = $value;
             }
         }
     }
