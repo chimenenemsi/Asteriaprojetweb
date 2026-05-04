@@ -1,0 +1,23 @@
+CREATE TABLE programs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(100) NOT NULL,
+    goal_type VARCHAR(50),
+    duration_weeks INT,
+    description VARCHAR(255)
+);
+
+CREATE TABLE exercises (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    program_id INT,
+
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(255),
+    muscle_group VARCHAR(50),
+    sets INT,
+    reps INT,
+    rest_seconds INT,
+
+    FOREIGN KEY (program_id)
+        REFERENCES programs(id)
+        ON DELETE CASCADE
+);
