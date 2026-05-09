@@ -15,6 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <style>
         :root { --primary: #2e7d32; --primary-light: #66bb6a; --bg: #f4f9f4; --card-bg: #ffffff; --text: #1a3a1a; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -98,6 +99,25 @@
 
         /* Stats Chart Container */
         .chart-container { background: white; border-radius: 24px; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); margin-bottom: 30px; height: 350px; }
+
+        /* Calendar Styles */
+        .calendar-day { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.03); border: 1px solid #eee; transition: 0.3s; }
+        .calendar-day:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.06); border-color: var(--primary-light); }
+        .calendar-day h4 { color: var(--primary); margin-bottom: 15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; font-size: 1.1rem; }
+        .calendar-meal { font-size: 0.85rem; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .meal-icon { font-size: 1.2rem; }
+        .meal-name { font-weight: 600; color: #444; }
+        .meal-calories { color: #888; font-size: 0.75rem; }
+
+        /* FullCalendar Customization */
+        .fc { background: white; border-radius: 24px; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); }
+        .fc-toolbar-title { color: var(--primary); font-weight: 800 !important; font-family: 'Outfit', sans-serif; }
+        .fc-button-primary { background-color: var(--primary) !important; border-color: var(--primary) !important; border-radius: 12px !important; }
+        .fc-event { border-radius: 8px !important; border: none !important; padding: 2px 5px !important; cursor: pointer; }
+        .event-breakfast { background-color: #ff9800 !important; }
+        .event-lunch { background-color: #2196f3 !important; }
+        .event-dinner { background-color: #4caf50 !important; }
+        .event-snack { background-color: #9c27b0 !important; }
     </style>
 </head>
 <body>
@@ -106,6 +126,7 @@
         <a href="#" class="active" onclick="showSection('dashboard', this)"><span>📊</span> Dashboard</a>
         <a href="#" onclick="showSection('plans', this)"><span>📅</span> Programmes</a>
         <a href="#" onclick="showSection('recipes', this)"><span>🥗</span> Recettes</a>
+        <a href="#" onclick="showSection('calendar', this)"><span>📅</span> Calendrier</a>
         
     </div>
 
@@ -194,6 +215,17 @@
             <div class="card">
                 <div class="card-body"><div id="pages-list"></div></div>
             </div>
+        </div>
+
+        <!-- CALENDAR SECTION -->
+        <div id="calendar" class="page-section">
+            <div style="margin-bottom: 30px; display: flex; gap: 20px; align-items: center;">
+                <select id="calendar-plan-select" class="form-control" style="width: 300px;" onchange="loadCalendar(this.value)">
+                    <option value="">Sélectionner un programme...</option>
+                </select>
+                <div id="calendar-info" style="font-weight: 600; color: var(--primary);"></div>
+            </div>
+            <div id="calendar-widget"></div>
         </div>
     </div>
 
@@ -400,55 +432,122 @@
             if (section === 'dashboard') loadDashboard();
             if (section === 'plans') loadPlans();
             if (section === 'recipes') loadRecipes();
+            if (section === 'calendar') prepareCalendar();
             if (section === 'pages') loadPages();
+        }
+
+        // --- CALENDAR LOGIC ---
+        let fullCalendar;
+
+        async function prepareCalendar() {
+            toggleSpinner(true);
+            try {
+                const resp = await fetch(`${API_BASE}?controller=DietPlan&action=obtenirTous`);
+                const data = await resp.json();
+                if (data.success) {
+                    const select = document.getElementById('calendar-plan-select');
+                    const currentVal = select.value;
+                    select.innerHTML = '<option value="">Sélectionner un programme...</option>' + 
+                        data.plans.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
+                    select.value = currentVal;
+                }
+            } catch (e) { showToast("Erreur chargement programmes", "error"); }
+            finally { toggleSpinner(false); }
+        }
+
+        async function loadCalendar(planId) {
+            if (!planId) {
+                if (fullCalendar) fullCalendar.destroy();
+                document.getElementById('calendar-info').textContent = '';
+                return;
+            }
+            toggleSpinner(true);
+            try {
+                const resp = await fetch(`${API_BASE}?controller=DietPlan&action=obtenirCalendrier&id=${planId}`);
+                const data = await resp.json();
+                if (data.success) {
+                    document.getElementById('calendar-info').textContent = `${data.plan.title} - ${data.plan.duration_days} jours`;
+                    
+                    const events = [];
+                    const startDate = new Date();
+                    
+                    data.calendar.forEach(day => {
+                        const currentDate = new Date(startDate);
+                        currentDate.setDate(startDate.getDate() + (day.day - 1));
+                        const dateStr = currentDate.toISOString().split('T')[0];
+                        
+                        day.recipes.forEach(r => {
+                            events.push({
+                                title: r.name,
+                                start: dateStr,
+                                className: `event-${r.meal_type.toLowerCase()}`,
+                                extendedProps: { recipe: r }
+                            });
+                        });
+                    });
+
+                    const calendarEl = document.getElementById('calendar-widget');
+                    if (fullCalendar) fullCalendar.destroy();
+                    
+                    fullCalendar = new FullCalendar.Calendar(calendarEl, {
+                        initialView: 'dayGridMonth',
+                        locale: 'fr',
+                        buttonText: { today: "Aujourd'hui", month: 'Mois', week: 'Semaine' },
+                        headerToolbar: {
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: 'dayGridMonth,timeGridWeek'
+                        },
+                        events: events,
+                        eventClick: function(info) {
+                            const r = info.event.extendedProps.recipe;
+                            showToast(`🥘 ${r.name} - ${r.calories} kcal`);
+                        }
+                    });
+                    fullCalendar.render();
+                }
+            } catch (e) { 
+                console.error(e);
+                showToast("Erreur chargement calendrier", "error"); 
+            }
+            finally { toggleSpinner(false); }
         }
 
         // --- DASHBOARD & CHARTS ---
         let charts = {};
         async function loadDashboard() {
-    toggleSpinner(true);
-    try {
-        const [pRes, rRes, pStatsRes, rStatsRes] = await Promise.all([
-            fetch(`${API_BASE}?controller=DietPlan&action=obtenirTous`),
-            fetch(`${API_BASE}?controller=Recipe&action=obtenirTous`),
-            fetch(`${API_BASE}?controller=DietPlan&action=obtenirStats`),
-            fetch(`${API_BASE}?controller=Recipe&action=obtenirStats`)
-        ]);
-        
-        const pData = await pRes.json();
-        const rData = await rRes.json();
-        const pStats = await pStatsRes.json();
-        const rStats = await rStatsRes.json();
+            toggleSpinner(true);
+            try {
+                const [pRes, rRes, pgRes, pStatsRes, rStatsRes] = await Promise.all([
+                    fetch(`${API_BASE}?controller=DietPlan&action=obtenirTous`),
+                    fetch(`${API_BASE}?controller=Recipe&action=obtenirTous`),
+                    fetch(`${API_BASE}?controller=StaticPage&action=obtenirTous`),
+                    fetch(`${API_BASE}?controller=DietPlan&action=obtenirStats`),
+                    fetch(`${API_BASE}?controller=Recipe&action=obtenirStats`)
+                ]);
+                
+                const pData = await pRes.json();
+                const rData = await rRes.json();
+                const pgData = await pgRes.json();
+                const pStats = await pStatsRes.json();
+                const rStats = await rStatsRes.json();
 
-        if (pData.success) {
-            document.getElementById('stat-active-plans').textContent =
-                pData.plans.filter(p => p.status === 'ACTIVE').length;
+                if (pData.success) {
+                    document.getElementById('stat-active-plans').textContent = pData.plans.filter(p => p.status === 'ACTIVE').length;
+                    const latest = pData.plans.slice(0, 5);
+                    document.getElementById('latest-plans').innerHTML = `<table class="table">` + latest.map(p => `<tr><td><strong>${p.title}</strong></td><td><span class="badge bg-success">${p.level}</span></td></tr>`).join('') + `</table>`;
+                }
+                if (rData.success) document.getElementById('stat-total-recipes').textContent = rData.recipes.length;
+                if (pgData.success) document.getElementById('stat-total-pages').textContent = pgData.pages.length;
 
-            const latest = pData.plans.slice(0, 5);
-            document.getElementById('latest-plans').innerHTML =
-                `<table class="table">` +
-                latest.map(p => `
-                    <tr>
-                        <td><strong>${p.title}</strong></td>
-                        <td><span class="badge bg-success">${p.level}</span></td>
-                    </tr>
-                `).join('') +
-                `</table>`;
+                renderCharts(pStats, rStats);
+            } catch (e) { 
+                console.error(e);
+                showToast("Erreur lors du chargement du dashboard", "error");
+            } finally {
+                toggleSpinner(false);
+            }
         }
-
-        if (rData.success) {
-            document.getElementById('stat-total-recipes').textContent = rData.recipes.length;
-        }
-
-        renderCharts(pStats, rStats);
-
-    } catch (e) {
-        console.error(e);
-        showToast("Erreur dashboard", "error");
-    } finally {
-        toggleSpinner(false);
-    }
-}
 
         function renderCharts(pStats, rStats) {
             if (charts.levels) charts.levels.destroy();
@@ -833,6 +932,7 @@
             toggleSpinner(true);
             const { search, sort, order } = state.pages;
             try {
+                const resp = await fetch(`${API_BASE}?controller=StaticPage&action=obtenirTous&search=${search}&sort=${sort}&order=${order}`);
                 const data = await resp.json();
                 if (data.success) {
                     let html = `<table class="table">
@@ -865,6 +965,7 @@
         async function deletePage(id) {
             if (confirm('Supprimer cette page ?')) {
                 toggleSpinner(true);
+                await fetch(`${API_BASE}?controller=StaticPage&action=supprimer&id=${id}`, { method: 'DELETE' });
                 showToast("Page supprimée");
                 loadPages(); loadDashboard();
                 toggleSpinner(false);

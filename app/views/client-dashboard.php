@@ -2,7 +2,7 @@
 /**
  * Dashboard Client - Catalogue Nutrition et Régimes
  * Style asteria (Vert écologique)
- * Point d'accès: http://localhost/gestion-diet/app/views/client-dashboard.php
+ * Point d'accès: http://localhost/gestion-allergies/app/views/client-dashboard.php
  */
 ?>
 <!DOCTYPE html>
@@ -60,6 +60,17 @@
         .recipe-info h4 { margin-bottom: 5px; font-weight: 700; }
         .recipe-macros { font-size: 13px; color: #666; font-weight: 600; }
         .macro-badge { background: #e8f5e9; padding: 2px 8px; border-radius: 8px; color: var(--primary); margin-right: 5px; }
+        
+        .tab-btn { padding: 10px 25px; border: none; background: #eee; border-radius: 12px; cursor: pointer; font-weight: 600; font-family: inherit; transition: 0.3s; }
+        .tab-btn.active { background: var(--primary); color: white; }
+        
+        .client-calendar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; margin-top: 20px; }
+        .client-calendar-day { background: #f9fdf9; border: 1px solid #edf5ed; border-radius: 18px; padding: 15px; text-align: center; transition: 0.3s; cursor: pointer; }
+        .client-calendar-day:hover { background: #e8f5e9; border-color: var(--primary); transform: translateY(-5px); }
+        .client-calendar-day h5 { color: var(--primary); margin-bottom: 8px; font-weight: 800; }
+        .client-calendar-meal-dots { display: flex; justify-content: center; gap: 4px; }
+        .meal-dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
+        .meal-dot.active { background: var(--primary); }
 
         footer { background: #1a3a1a; color: white; padding: 80px 60px; text-align: center; }
     </style>
@@ -162,8 +173,13 @@
                         </div>
                     </div>
                 </div>
-                <h3>📅 Planning des Repas</h3>
-                <div style="margin-top: 20px;">
+                <h3>Planning des Repas</h3>
+                <div style="display: flex; gap: 10px; margin: 15px 0;">
+                    <button class="tab-btn active" id="tab-list" onclick="switchView('list')">📋 Liste</button>
+                    <button class="tab-btn" id="tab-calendar" onclick="switchView('calendar', ${id})">📅 Calendrier</button>
+                </div>
+
+                <div id="view-list" style="margin-top: 20px;">
                     ${recipes.length ? recipes.map(r => `
                         <div class="recipe-item">
                             <div class="recipe-day">JOUR<span>${r.day_number}</span></div>
@@ -180,6 +196,9 @@
                         </div>
                     `).join('') : '<p style="padding: 20px; text-align: center; background: #f5f5f5; border-radius: 15px;">Aucune recette associée pour le moment.</p>'}
                 </div>
+                <div id="view-calendar" style="display: none; margin-top: 20px;">
+                    <!-- Calendar injected here -->
+                </div>
             `;
             
             document.getElementById('modal-title').textContent = p.title;
@@ -188,6 +207,45 @@
         }
 
         function closeModal() { document.getElementById('details-modal').classList.remove('show'); }
+        
+        async function switchView(view, planId) {
+            document.getElementById('tab-list').classList.toggle('active', view === 'list');
+            document.getElementById('tab-calendar').classList.toggle('active', view === 'calendar');
+            document.getElementById('view-list').style.display = view === 'list' ? 'block' : 'none';
+            document.getElementById('view-calendar').style.display = view === 'calendar' ? 'block' : 'none';
+            
+            if (view === 'calendar') {
+                const grid = document.getElementById('view-calendar');
+                grid.innerHTML = '<div style="text-align:center; padding:40px;">Chargement du calendrier...</div>';
+                
+                try {
+                    const resp = await fetch(`${API_BASE}?controller=DietPlan&action=obtenirCalendrier&id=${planId}`);
+                    const data = await resp.json();
+                    if (data.success) {
+                        let html = `<div class="client-calendar-grid">`;
+                        data.calendar.forEach(day => {
+                            const hasMeals = day.recipes.length > 0;
+                            const mealTypes = day.recipes.map(r => r.meal_type);
+                            
+                            html += `
+                                <div class="client-calendar-day">
+                                    <h5>Jour ${day.day}</h5>
+                                    <div class="client-calendar-meal-dots">
+                                        <div class="meal-dot ${mealTypes.includes('BREAKFAST') ? 'active' : ''}" title="Petit-déjeuner"></div>
+                                        <div class="meal-dot ${mealTypes.includes('LUNCH') ? 'active' : ''}" title="Déjeuner"></div>
+                                        <div class="meal-dot ${mealTypes.includes('DINNER') ? 'active' : ''}" title="Dîner"></div>
+                                        <div class="meal-dot ${mealTypes.includes('SNACK') ? 'active' : ''}" title="Snack"></div>
+                                    </div>
+                                    ${hasMeals ? `<div style="font-size:10px; margin-top:5px; color:#2e7d32; font-weight:700;">${day.recipes.length} repas</div>` : ''}
+                                </div>
+                            `;
+                        });
+                        grid.innerHTML = html + `</div>`;
+                    }
+                } catch (e) { grid.innerHTML = 'Erreur lors du chargement.'; }
+            }
+        }
+
         window.onclick = function(e) { if(e.target.classList.contains('modal')) closeModal(); }
         
         init();

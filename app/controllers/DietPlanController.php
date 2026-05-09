@@ -62,6 +62,51 @@ class DietPlanController
         }
     }
 
+
+    // ===== CALENDAR DATA =====
+    public static function obtenirCalendrier()
+    {
+        try {
+            $id = intval($_GET['id'] ?? 0);
+            $pdo = Database::getConnexion();
+            
+            // 1. Get plan info
+            $stmtPlan = $pdo->prepare("SELECT * FROM diet_plans WHERE id = :id");
+            $stmtPlan->execute([':id' => $id]);
+            $plan = $stmtPlan->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$plan) {
+                echo json_encode(['success' => false, 'message' => "Programme non trouvé"]);
+                return;
+            }
+
+            // 2. Get all recipes for this plan
+            $stmtRecipes = $pdo->prepare("SELECT * FROM recipes WHERE diet_plan_id = :id ORDER BY day_number ASC, meal_type ASC");
+            $stmtRecipes->execute([':id' => $id]);
+            $recipes = $stmtRecipes->fetchAll(PDO::FETCH_ASSOC);
+
+            // 3. Group by day
+            $calendar = [];
+            for ($i = 1; $i <= $plan['duration_days']; $i++) {
+                $calendar[$i] = [
+                    'day' => $i,
+                    'recipes' => array_values(array_filter($recipes, function($r) use ($i) {
+                        return intval($r['day_number']) === $i;
+                    }))
+                ];
+            }
+
+            echo json_encode([
+                'success' => true, 
+                'plan' => $plan,
+                'calendar' => array_values($calendar)
+            ]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+
     // ===== CREATE =====
     public static function creer()
     {
