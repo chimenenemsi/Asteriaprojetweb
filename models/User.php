@@ -18,8 +18,7 @@ class User {
         ];
 
         foreach ($checks as $column => $sql) {
-            $stmt = $this->conn->prepare("SHOW COLUMNS FROM users LIKE :column_name");
-            $stmt->execute([':column_name' => $column]);
+            $stmt = $this->conn->query("SHOW COLUMNS FROM users LIKE " . $this->conn->quote($column));
             if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
                 $this->conn->exec($sql);
             }

@@ -1,40 +1,42 @@
 <?php
-if(!isset($_SESSION['user'])) {
-    header("Location: index.php?action=login");
-    exit();
+if (!isset($_SESSION['user'])) {
+    header('Location: ' . action_url('login'));
+    exit;
 }
+
+$currentUser = $_SESSION['user'];
 ?>
-<!doctype html>
-<html lang="fr">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>NutriFit — Bienvenue</title>
-    <link rel="stylesheet" href="assets/style.css" />
-</head>
-<body>
-    <div class="nf-shell">
-        <div class="nf-card" style="width:min(560px,100%);">
-            <main class="nf-main">
-                <h2 class="nf-h2" style="margin-bottom:8px; text-align:center;">Bienvenue chez NutriFit !</h2>
-                <p class="nf-sub" style="margin-top:0; text-align:center;">Bonjour <?php echo htmlspecialchars($_SESSION['user']['fullname']); ?> 👋</p>
-
-                <div style="margin: 24px 0; text-align:center;">
-                    <p>🌱 Content de vous revoir</p>
-                    <p>🥗 Découvrez nos conseils nutritionnels avec l’assistant en bas à droite</p>
-                    <p>♻️ Mangez durable, vivez mieux</p>
-                </div>
-
-                <div class="nf-actions" style="justify-content:center; flex-wrap:wrap;">
-                    <a class="nf-btn" style="text-decoration:none; display:inline-block;" href="index.php?action=logout">Se déconnecter</a>
-                </div>
-            </main>
+<section class="monta-section">
+    <div class="monta-hero">
+        <div>
+            <span class="monta-eyebrow">User Space</span>
+            <h1>Welcome back, <?= htmlspecialchars((string) $currentUser['fullname'], ENT_QUOTES, 'UTF-8') ?>.</h1>
+            <p>Your account now lands in the same Asteria frontoffice experience as the produits homepage, so browsing products and ordering stays visually consistent.</p>
+            <div class="monta-actions">
+                <a class="monta-button" href="<?= htmlspecialchars(route_url('frontoffice/products'), ENT_QUOTES, 'UTF-8') ?>">Browse Products</a>
+                <a class="monta-button secondary" href="<?= htmlspecialchars(route_url('frontoffice/orders'), ENT_QUOTES, 'UTF-8') ?>">Open Orders</a>
+                <a class="monta-button secondary" href="<?= htmlspecialchars(action_url('logout'), ENT_QUOTES, 'UTF-8') ?>">Logout</a>
+            </div>
+        </div>
+        <div class="monta-hero-visual">
+            <img src="<?= htmlspecialchars(asset_url('assets/frontoffice/nutrio.radiantthemes.com/wp-content/uploads/2022/05/banner-bg.jpg'), ENT_QUOTES, 'UTF-8') ?>" alt="Asteria catalog">
         </div>
     </div>
+</section>
 
-    <?php
-      $nfChatbotContext = 'user';
-      include __DIR__ . '/partials/chatbot_widget.php';
-    ?>
-</body>
-</html>
+<section class="monta-section">
+    <div class="monta-grid">
+        <div class="monta-card">
+            <h3>Catalog</h3>
+            <p>Find products by category, stock state, price, and status from the same storefront flow.</p>
+        </div>
+        <div class="monta-card">
+            <h3>Orders</h3>
+            <p>Create an order with customer details, quantity, delivery address, and map location.</p>
+        </div>
+        <div class="monta-card">
+            <h3>Assistant</h3>
+            <p>Use the floating product assistant to get recommendations from the live product database.</p>
+        </div>
+    </div>
+</section>

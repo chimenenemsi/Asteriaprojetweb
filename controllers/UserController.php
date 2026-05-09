@@ -40,7 +40,7 @@ class UserController {
                 $role = $user['role'] ?? 'user';
                 
                 if ($role === 'admin') {
-                    header("Location: index.php?action=list");
+                    header("Location: " . $this->usersBackofficeUrl());
                 } else {
                     header("Location: index.php?action=user_dashboard");
                 }
@@ -181,7 +181,7 @@ class UserController {
         }
     }
 
-    public function admin() {
+    public function admin(bool $backoffice = false) {
         $search = trim($_GET['q'] ?? '');
         $letter = strtoupper(trim($_GET['letter'] ?? ''));
         $roleFilter = trim($_GET['role_filter'] ?? '');
@@ -193,6 +193,21 @@ class UserController {
         if (isset($_GET['edit']) && ctype_digit((string)$_GET['edit'])) {
             $editingUser = $this->user->getUserById((int)$_GET['edit']);
         }
+        if ($backoffice) {
+            (new BaseController())->render('users/index', [
+                'pageTitle' => 'Users',
+                'area' => 'backoffice',
+                'currentSection' => 'users',
+                'users' => $users,
+                'editingUser' => $editingUser,
+                'currentSearch' => $search,
+                'currentLetter' => $letter,
+                'currentRoleFilter' => $roleFilter,
+                'currentSortBy' => $sortBy,
+                'currentSortDir' => $sortDir,
+            ], 'backoffice');
+            return;
+        }
         include __DIR__ . "/../views/admin.php";
     }
 
@@ -203,7 +218,7 @@ class UserController {
         }
 
         if (!isset($_POST['submit'])) {
-            header("Location: index.php?action=list");
+            header("Location: " . $this->usersBackofficeUrl());
             exit();
         }
 
@@ -216,14 +231,14 @@ class UserController {
 
         if ($fullname === '' || $email === '') {
             $_SESSION['error'] = "Nom et email sont obligatoires.";
-            header("Location: index.php?action=list" . ($id !== '' ? "&edit=" . urlencode($id) : ""));
+            header("Location: " . $this->usersBackofficeUrl($id !== '' ? ['edit' => $id] : []));
             exit();
         }
 
         if ($id === '') {
             if ($password === '' || $secretCode === '') {
                 $_SESSION['error'] = "Mot de passe et code secret sont obligatoires pour creer un utilisateur.";
-                header("Location: index.php?action=list");
+                header("Location: " . $this->usersBackofficeUrl());
                 exit();
             }
 
@@ -231,19 +246,19 @@ class UserController {
             $_SESSION[$ok ? 'success' : 'error'] = $ok
                 ? "Utilisateur cree avec succes."
                 : "Creation impossible (email deja utilise ou erreur).";
-            header("Location: index.php?action=list");
+            header("Location: " . $this->usersBackofficeUrl());
             exit();
         }
 
         if (!ctype_digit($id)) {
             $_SESSION['error'] = "ID utilisateur invalide.";
-            header("Location: index.php?action=list");
+            header("Location: " . $this->usersBackofficeUrl());
             exit();
         }
 
         if ((int)$id === (int)$_SESSION['user']['id'] && $role !== 'admin') {
             $_SESSION['error'] = "Vous ne pouvez pas retirer votre propre role admin.";
-            header("Location: index.php?action=list&edit=" . urlencode($id));
+            header("Location: " . $this->usersBackofficeUrl(['edit' => $id]));
             exit();
         }
 
@@ -251,7 +266,7 @@ class UserController {
         $_SESSION[$ok ? 'success' : 'error'] = $ok
             ? "Utilisateur modifie avec succes."
             : "Modification impossible (email deja utilise ou erreur).";
-        header("Location: index.php?action=list");
+        header("Location: " . $this->usersBackofficeUrl());
         exit();
     }
 
@@ -267,7 +282,7 @@ class UserController {
         }
         if(isset($_GET['id'])) {
             $this->user->delete($_GET['id']);
-            header("Location: index.php?action=list");
+            header("Location: " . $this->usersBackofficeUrl());
             exit();
         }
     }
@@ -285,7 +300,7 @@ class UserController {
             
             if($userId == $_SESSION['user']['id'] && $role !== 'admin') {
                 $_SESSION['error'] = "Vous ne pouvez pas changer votre propre rôle !";
-                header("Location: index.php?action=list");
+                header("Location: " . $this->usersBackofficeUrl());
                 exit();
             }
             
@@ -296,8 +311,16 @@ class UserController {
             }
         }
         
-        header("Location: index.php?action=list");
+        header("Location: " . $this->usersBackofficeUrl());
         exit();
+    }
+
+    private function usersBackofficeUrl(array $params = []): string {
+        if (function_exists('route_url')) {
+            return route_url('backoffice/users', $params);
+        }
+
+        return 'index.php?action=list' . ($params !== [] ? '&' . http_build_query($params) : '');
     }
 }
 ?>
