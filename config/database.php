@@ -69,7 +69,7 @@ final class Database
 
     private static function ensureSchema(PDO $pdo): void
     {
-        $stmt = $pdo->query("SHOW TABLES LIKE 'product_categories'");
+        $stmt = $pdo->query("SHOW TABLES LIKE 'diet_plans'");
         if ($stmt->fetch() !== false) {
             return;
         }

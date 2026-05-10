@@ -67,5 +67,14 @@
                 </div>
             </a>
         </div>
+        <div class="col-md-4">
+            <a class="card h-100 text-decoration-none border-0 shadow-sm" href="<?= htmlspecialchars(route_url('backoffice/diet-admin'), ENT_QUOTES, 'UTF-8') ?>">
+                <div class="card-body">
+                    <span class="badge bg-success-subtle text-success mb-3">Nutrition</span>
+                    <h5 class="card-title text-dark mb-2">Diet Management</h5>
+                    <p class="text-muted mb-0">Manage diet plans, recipes, and AI-driven nutrition suggestions.</p>
+                </div>
+            </a>
+        </div>
     </div>
 </div>

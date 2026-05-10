@@ -67,7 +67,7 @@
         <h2>Quick Shortcuts</h2>
         <div class="unified-mini-stats">
             <a class="unified-mini-stat" href="<?= htmlspecialchars(route_url('frontoffice/products'), ENT_QUOTES, 'UTF-8') ?>"><strong>Shop</strong><span>Products</span></a>
-            <a class="unified-mini-stat" href="<?= htmlspecialchars(route_url('frontoffice/programs'), ENT_QUOTES, 'UTF-8') ?>"><strong>Coach</strong><span>Programs</span></a>
+            <a class="unified-mini-stat" href="<?= htmlspecialchars(route_url('frontoffice/diet-client'), ENT_QUOTES, 'UTF-8') ?>"><strong>Diet</strong><span>Nutrition</span></a>
             <a class="unified-mini-stat" href="<?= htmlspecialchars(route_url('frontoffice/goals'), ENT_QUOTES, 'UTF-8') ?>"><strong>Track</strong><span>Goals</span></a>
             <a class="unified-mini-stat" href="<?= htmlspecialchars(route_url('frontoffice/records'), ENT_QUOTES, 'UTF-8') ?>"><strong>Log</strong><span>Progress</span></a>
         </div>

@@ -399,17 +399,96 @@
         } catch (e) { console.error(e); }
     }
 
-    function openPlanModal() { document.getElementById('plan-modal').classList.add('show'); }
-    function openRecipeModal() { 
+    function openPlanModal(plan = null) { 
+        if (plan) {
+            document.getElementById('plan-modal-title').textContent = 'Modifier le Programme';
+            document.getElementById('plan-id').value = plan.id;
+            document.getElementById('plan-title').value = plan.title;
+            document.getElementById('plan-goal').value = plan.goal;
+            document.getElementById('plan-duration').value = plan.duration_days;
+            document.getElementById('plan-calories').value = plan.target_calories_per_day;
+            document.getElementById('plan-level').value = plan.level;
+            document.getElementById('plan-status').value = plan.status;
+        } else {
+            document.getElementById('plan-modal-title').textContent = 'Nouveau Programme';
+            document.getElementById('plan-form').reset();
+            document.getElementById('plan-id').value = '';
+        }
+        document.getElementById('plan-modal').classList.add('show'); 
+    }
+
+    function openRecipeModal(recipe = null) { 
         fetch(`${DIET_API}?controller=DietPlan&action=obtenirTous`).then(r => r.json()).then(data => {
-            document.getElementById('recipe-plan').innerHTML = data.plans.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
+            const select = document.getElementById('recipe-plan');
+            select.innerHTML = data.plans.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
+            
+            if (recipe) {
+                document.getElementById('recipe-modal-title').textContent = 'Modifier la Recette';
+                document.getElementById('recipe-id').value = recipe.id;
+                document.getElementById('recipe-name').value = recipe.name;
+                document.getElementById('recipe-plan').value = recipe.diet_plan_id;
+                document.getElementById('recipe-meal').value = recipe.meal_type;
+                document.getElementById('recipe-day').value = recipe.day_number;
+                document.getElementById('recipe-cal').value = recipe.calories;
+                document.getElementById('recipe-prot').value = recipe.proteins;
+                document.getElementById('recipe-carb').value = recipe.carbs;
+                document.getElementById('recipe-fat').value = recipe.fats;
+            } else {
+                document.getElementById('recipe-modal-title').textContent = 'Nouvelle Recette';
+                document.getElementById('recipe-form').reset();
+                document.getElementById('recipe-id').value = '';
+            }
         });
         document.getElementById('recipe-modal').classList.add('show'); 
     }
+
+    async function editDietPlan(id) {
+        const resp = await fetch(`${DIET_API}?controller=DietPlan&action=obtenirTous`);
+        const data = await resp.json();
+        const plan = data.plans.find(p => p.id == id);
+        if (plan) openPlanModal(plan);
+    }
+
+    async function deleteDietPlan(id) {
+        if (!confirm('Supprimer ce programme ?')) return;
+        await fetch(`${DIET_API}?controller=DietPlan&action=supprimer&id=${id}`);
+        loadDietPlans();
+        loadDietDashboard();
+    }
+
+    async function editDietRecipe(id) {
+        const resp = await fetch(`${DIET_API}?controller=Recipe&action=obtenirTous`);
+        const data = await resp.json();
+        const recipe = data.recipes.find(r => r.id == id);
+        if (recipe) openRecipeModal(recipe);
+    }
+
+    async function deleteDietRecipe(id) {
+        if (!confirm('Supprimer cette recette ?')) return;
+        await fetch(`${DIET_API}?controller=Recipe&action=supprimer&id=${id}`);
+        loadDietRecipes();
+        loadDietDashboard();
+    }
+
+    let dietSearchTimeout;
+    function debounceDietSearch(type) {
+        clearTimeout(dietSearchTimeout);
+        dietSearchTimeout = setTimeout(() => {
+            dietState[type].search = document.getElementById(`search-${type}`).value;
+            if (type === 'plans') loadDietPlans();
+            else loadDietRecipes();
+        }, 300);
+    }
+
     function closeDietModal(id) { document.getElementById(id).classList.remove('show'); }
 
     async function getDietAiSuggestion(planId) {
         if (!planId) return;
+        const btn = document.querySelector('#recipe-form button[type="submit"]');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'IA en cours...';
+
         try {
             const resp = await fetch(`${DIET_API}?controller=OpenAI&action=proposerRecette&plan_id=${planId}`);
             const data = await resp.json();
@@ -421,12 +500,21 @@
                 document.getElementById('recipe-prot').value = r.proteins || 0;
                 document.getElementById('recipe-carb').value = r.carbs || 0;
                 document.getElementById('recipe-fat').value = r.fats || 0;
+            } else {
+                alert("L'IA n'a pas pu générer de suggestion : " + (data.message || "Erreur inconnue"));
             }
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            console.error(e);
+            alert("Erreur lors de la communication avec l'IA.");
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
     }
 
     document.getElementById('plan-form').onsubmit = async (e) => {
         e.preventDefault();
+        const id = document.getElementById('plan-id').value;
         const data = {
             title: document.getElementById('plan-title').value,
             goal: document.getElementById('plan-goal').value,
@@ -435,13 +523,15 @@
             level: document.getElementById('plan-level').value,
             status: document.getElementById('plan-status').value
         };
-        const url = `${DIET_API}?controller=DietPlan&action=creer`;
+        const action = id ? 'mettre_a_jour' : 'creer';
+        const url = `${DIET_API}?controller=DietPlan&action=${action}${id ? '&id='+id : ''}`;
         await fetch(url, { method: 'POST', body: JSON.stringify(data) });
-        closeDietModal('plan-modal'); loadDietPlans();
+        closeDietModal('plan-modal'); loadDietPlans(); loadDietDashboard();
     };
 
     document.getElementById('recipe-form').onsubmit = async (e) => {
         e.preventDefault();
+        const id = document.getElementById('recipe-id').value;
         const data = {
             name: document.getElementById('recipe-name').value,
             diet_plan_id: document.getElementById('recipe-plan').value,
@@ -452,9 +542,10 @@
             carbs: document.getElementById('recipe-carb').value,
             fats: document.getElementById('recipe-fat').value
         };
-        const url = `${DIET_API}?controller=Recipe&action=creer`;
+        const action = id ? 'mettre_a_jour' : 'creer';
+        const url = `${DIET_API}?controller=Recipe&action=${action}${id ? '&id='+id : ''}`;
         await fetch(url, { method: 'POST', body: JSON.stringify(data) });
-        closeDietModal('recipe-modal'); loadDietRecipes();
+        closeDietModal('recipe-modal'); loadDietRecipes(); loadDietDashboard();
     };
 
     loadDietDashboard();

@@ -8,9 +8,10 @@ class GeminiCoachService
 
     public function __construct()
     {
-        $services = require ROOT_PATH . '/config/services.php';
-        $this->apiKey = (string)($services['gemini_api_key'] ?? '');
-        $this->model = (string)($services['gemini_model'] ?? 'gemini-1.5-flash');
+        require_once ROOT_PATH . '/config/services.php';
+        $config = services();
+        $this->apiKey = (string)($config['gemini_api_key'] ?? '');
+        $this->model = (string)($config['gemini_model'] ?? 'gemini-1.5-flash');
     }
 
     public function getCoachingResponse(string $message): string

@@ -241,6 +241,23 @@ function handle_user_action(string $action): void
     }
 }
 
+// Diet Management Routes (Integrated from gestion-diet)
+if (isset($_GET['controller'])) {
+    $controller = $_GET['controller'];
+    $action = $_GET['action'] ?? 'obtenirTous';
+    
+    // Autoload for diet controllers in app/controllers
+    $file = ROOT_PATH . '/app/controllers/' . $controller . 'Controller.php';
+    if (file_exists($file)) {
+        require_once $file;
+        $controllerClass = $controller . 'Controller';
+        if (class_exists($controllerClass) && method_exists($controllerClass, $action)) {
+            $controllerClass::$action();
+            exit;
+        }
+    }
+}
+
 if (isset($_GET['action'])) {
     handle_user_action(trim((string) $_GET['action']));
     exit;
@@ -546,21 +563,4 @@ switch ($resource) {
     default:
         (new BaseController())->renderNotFound();
         break;
-}
-
-// Diet Management Routes (Integrated from gestion-diet)
-if (isset($_GET['controller'])) {
-    $controller = $_GET['controller'];
-    $action = $_GET['action'] ?? 'obtenirTous';
-    
-    // Autoload for diet controllers in app/controllers
-    $file = ROOT_PATH . '/app/controllers/' . $controller . 'Controller.php';
-    if (file_exists($file)) {
-        require_once $file;
-        $controllerClass = $controller . 'Controller';
-        if (class_exists($controllerClass) && method_exists($controllerClass, $action)) {
-            $controllerClass::$action();
-            exit;
-        }
-    }
 }
