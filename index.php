@@ -36,6 +36,11 @@ require_once ROOT_PATH . '/controllers/ProductController.php';
 require_once ROOT_PATH . '/controllers/OrderController.php';
 require_once ROOT_PATH . '/controllers/AiChatController.php';
 require_once ROOT_PATH . '/controllers/UserController.php';
+require_once ROOT_PATH . '/controllers/HomeController.php';
+require_once ROOT_PATH . '/controllers/FrontofficeController.php';
+require_once ROOT_PATH . '/controllers/BackofficeController.php';
+require_once ROOT_PATH . '/controllers/GeminiCoachService.php';
+require_once ROOT_PATH . '/controllers/AiCoachController.php';
 
 function base_url(): string
 {
@@ -98,6 +103,8 @@ function frontoffice_navigation(): array
 {
     return [
         'home' => 'Home',
+        'about-us' => 'About',
+        'programs' => 'Programs',
         'categories' => 'Product Categories',
         'products' => 'Products',
         'orders' => 'Orders',
@@ -108,9 +115,13 @@ function backoffice_navigation(): array
 {
     return [
         'dashboard' => 'Dashboard',
+        'programs' => 'Programs',
+        'exercises' => 'Exercises',
         'categories' => 'Product Categories',
         'products' => 'Products',
         'orders' => 'Orders',
+        'users' => 'Users',
+        'follow' => 'Follow',
     ];
 }
 
@@ -231,19 +242,71 @@ $action = $segments[2] ?? 'index';
 
 switch ($resource) {
     case 'home':
-        (new BaseController())->render('home', [
-            'pageTitle' => 'Asteria Produits Home',
-            'area' => 'frontoffice',
-            'currentSection' => 'home',
-        ], 'frontoffice');
+        (new HomeController())->index();
+        break;
+
+    case 'about-us':
+    case 'meal-planning':
+    case 'progress-tracking':
+    case 'nutrition-blog':
+    case 'consultation':
+        (new FrontofficeController())->show($resource);
+        break;
+
+    case 'programs':
+        if ($area === 'backoffice') {
+            (new BackofficeController())->show('programs');
+        } else {
+            (new FrontofficeController())->show('programs');
+        }
+        break;
+
+    case 'programs-pdf':
+        if ($area === 'backoffice') {
+            (new BackofficeController())->show('programs-pdf');
+        } else {
+            (new HomeController())->notFound();
+        }
+        break;
+
+    case 'exercises':
+        if ($area === 'backoffice') {
+            (new BackofficeController())->show('exercises');
+        } else {
+            (new HomeController())->notFound();
+        }
+        break;
+
+    case 'exercises-pdf':
+        if ($area === 'backoffice') {
+            (new BackofficeController())->show('exercises-pdf');
+        } else {
+            (new HomeController())->notFound();
+        }
+        break;
+
+    case 'exercises-list-pdf':
+        if ($area === 'backoffice') {
+            (new BackofficeController())->show('exercises-list-pdf');
+        } else {
+            (new HomeController())->notFound();
+        }
+        break;
+
+    case 'ai-coach':
+        (new AiCoachController())->chat();
+        break;
+
+    case 'ai-summary':
+        (new AiCoachController())->summarize();
         break;
 
     case 'dashboard':
-        (new BaseController())->render('dashboard', [
-            'pageTitle' => 'Produits Dashboard',
-            'area' => 'backoffice',
-            'currentSection' => 'dashboard',
-        ], 'backoffice');
+        if ($area === 'backoffice') {
+            (new BackofficeController())->show('dashboard');
+        } else {
+            (new HomeController())->index();
+        }
         break;
 
     case 'categories':
@@ -349,8 +412,7 @@ switch ($resource) {
 
     case 'users':
         if ($area !== 'backoffice') {
-            http_response_code(404);
-            echo '<h1>Not Found</h1>';
+            (new HomeController())->notFound();
             break;
         }
         if (!isset($_SESSION['user']) || ($_SESSION['user']['role'] ?? 'user') !== 'admin') {
@@ -362,8 +424,7 @@ switch ($resource) {
 
     case 'follow':
         if ($area !== 'backoffice') {
-            http_response_code(404);
-            echo '<h1>Not Found</h1>';
+            (new HomeController())->notFound();
             break;
         }
         (new BaseController())->render('follow/index', [
@@ -374,7 +435,6 @@ switch ($resource) {
         break;
 
     default:
-        http_response_code(404);
-        echo '<h1>Not Found</h1>';
+        (new HomeController())->notFound();
         break;
 }

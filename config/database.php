@@ -62,6 +62,39 @@ final class Database
     {
         self::ensureUsersSchema($pdo);
         self::ensureProductsSchema($pdo);
+        self::ensureCoachingSchema($pdo);
+    }
+
+    private static function ensureCoachingSchema(PDO $pdo): void
+    {
+        $stmt = $pdo->query("SHOW TABLES LIKE 'programs'");
+        $tableExists = $stmt->fetch() !== false;
+
+        if ($tableExists) {
+            // Check for missing columns in existing table
+            $stmt = $pdo->query("SHOW COLUMNS FROM programs LIKE 'created_at'");
+            if ($stmt->fetch() === false) {
+                $pdo->exec("ALTER TABLE programs ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
+                $pdo->exec("ALTER TABLE programs ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+            }
+            return;
+        }
+
+        $sql = file_get_contents(ROOT_PATH . '/config/schema.sql');
+        if ($sql === false) {
+            return;
+        }
+
+        $statements = array_filter(array_map('trim', preg_split('/;\s*(?:\r?\n|$)/', $sql) ?: []));
+        foreach ($statements as $statement) {
+            if ($statement !== '') {
+                try {
+                    $pdo->exec($statement);
+                } catch (Throwable) {
+                    // Ignore errors if table already exists or other minor issues
+                }
+            }
+        }
     }
 
     private static function ensureProductsSchema(PDO $pdo): void

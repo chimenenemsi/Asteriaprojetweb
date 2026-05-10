@@ -64,3 +64,30 @@ CREATE TABLE IF NOT EXISTS orders (
         REFERENCES users(id)
         ON DELETE SET NULL
 );
+
+CREATE TABLE IF NOT EXISTS programs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    goal_type VARCHAR(50),
+    duration_weeks INT,
+    description VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS exercises (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    program_id INT,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(255),
+    muscle_group VARCHAR(50),
+    sets INT,
+    reps INT,
+    rest_seconds INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_exercises_program
+        FOREIGN KEY (program_id)
+        REFERENCES programs(id)
+        ON DELETE CASCADE
+);

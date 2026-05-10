@@ -1,7 +1,17 @@
 <?php
 declare(strict_types=1);
 
-function produits_load_dotenv(string $path): void
+function env(string $name, string $default = ''): string
+{
+    $value = getenv($name);
+    if ($value === false || trim((string) $value) === '') {
+        return $default;
+    }
+
+    return trim((string) $value);
+}
+
+function load_dotenv(string $path): void
 {
     if (!is_file($path) || !is_readable($path)) {
         return;
@@ -32,23 +42,22 @@ function produits_load_dotenv(string $path): void
     }
 }
 
-function produits_env(string $name, string $default = ''): string
+function services(): array
 {
-    $value = getenv($name);
-    if ($value === false || trim((string) $value) === '') {
-        return $default;
-    }
-
-    return trim((string) $value);
-}
-
-function produits_services(): array
-{
-    produits_load_dotenv(ROOT_PATH . '/.env');
+    load_dotenv(ROOT_PATH . '/.env');
 
     return [
-        'gemini_api_key' => produits_env('GEMINI_API_KEY', produits_env('GOOGLE_API_KEY', '')),
-        'gemini_model' => produits_env('GEMINI_MODEL', 'gemini-2.5-flash'),
-        'gemini_api_url' => produits_env('GEMINI_API_URL', 'https://generativelanguage.googleapis.com/v1beta/models'),
+        'gemini_api_key' => env('GEMINI_API_KEY', env('GOOGLE_API_KEY', '')),
+        'gemini_model' => env('GEMINI_MODEL', 'gemini-1.5-flash'),
+        'gemini_api_url' => env('GEMINI_API_URL', 'https://generativelanguage.googleapis.com/v1beta/models'),
+        'exercise_api_key' => env('EXERCISE_API_KEY', env('API_NINJAS_API_KEY', '')),
+        'exercise_api_url' => env('EXERCISE_API_URL', 'https://api.api-ninjas.com/v1/exercises'),
+        'pdf_output_dir' => ROOT_PATH . '/storage/generated-pdfs',
     ];
 }
+
+// Aliases for compatibility
+function produits_services() { return services(); }
+function coaching_services() { return services(); }
+
+return services();

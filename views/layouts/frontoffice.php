@@ -9,17 +9,18 @@
     <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('assets/frontoffice/nutrio.radiantthemes.com/wp-content/plugins/template-kit-export/public/assets/css/template-kit-export-public.min365c.css'), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('assets/frontoffice/nutrio.radiantthemes.com/wp-content/plugins/header-footer-elementor/assets/css/header-footer-elementora242.css'), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('assets/frontoffice/nutrio.radiantthemes.com/wp-content/uploads/elementor/css/global975d.css'), ENT_QUOTES, 'UTF-8') ?>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root{--monta-green:#6ca138;--monta-dark:#1b2115;--monta-muted:#60706a;--monta-offwhite:#f7f4ee}
         *{box-sizing:border-box}
         body{margin:0;font-family:Outfit,"Segoe UI",Arial,sans-serif;background:linear-gradient(180deg,#fefcf8 0%,#f7f4ee 100%);color:#153122}
-        a{color:inherit}
+        a{color:inherit; text-decoration: none;}
         .monta-shell{max-width:1180px;margin:0 auto;padding:0 20px}
         .monta-topbar{background:#181614;color:#fff;font-size:13px;line-height:1.2}
         .monta-topbar-inner,.monta-navbar,.monta-footer-inner{display:flex;align-items:center;justify-content:space-between;gap:16px}
         .monta-topbar-inner{min-height:20px;padding:0}
         .monta-topbar-left,.monta-topbar-right{display:flex;align-items:center;gap:28px;white-space:nowrap}
-        .monta-navbar-wrap{position:sticky;top:0;z-index:20;background:rgba(28,37,17,.9);backdrop-filter:blur(8px)}
+        .monta-navbar-wrap{position:sticky;top:0;z-index:1020;background:rgba(28,37,17,.9);backdrop-filter:blur(8px)}
         .monta-navbar{min-height:74px}
         .monta-brand{display:inline-flex;align-items:center;flex:0 0 auto;text-decoration:none;gap:12px}
         .monta-brand img{width:88px;height:auto;display:block}
@@ -56,8 +57,16 @@
         .badge{display:inline-block;padding:6px 12px;border-radius:999px;background:rgba(108,161,56,.12);color:#476b26;font-size:12px;font-weight:700}
         input,select,textarea{width:100%;padding:12px 14px;border:1px solid rgba(21,49,34,.14);border-radius:14px;box-sizing:border-box;font:inherit;background:#fff}
         label{display:block;margin-bottom:6px;font-weight:600}
-        .row{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
-        .col-12{grid-column:span 12}.col-6{grid-column:span 6}.col-4{grid-column:span 4}.col-3{grid-column:span 3}
+        /* Custom Grid overrides to prevent conflicts with Bootstrap */
+        .monta-main .row{display:flex;flex-wrap:wrap;margin-right:-15px;margin-left:-15px}
+        .monta-main .col-12,.monta-main .col-6,.monta-main .col-4,.monta-main .col-3{position:relative;width:100%;padding-right:15px;padding-left:15px}
+        .monta-main .col-12{flex:0 0 100%;max-width:100%}
+        .monta-main .col-6{flex:0 0 50%;max-width:50%}
+        .monta-main .col-4{flex:0 0 33.333333%;max-width:33.333333%}
+        .monta-main .col-3{flex:0 0 25%;max-width:25%}
+        @media (max-width:900px){
+            .monta-main .col-6,.monta-main .col-4,.monta-main .col-3{flex:0 0 100%;max-width:100%}
+        }
         .error{color:#b91c1c;font-size:13px;margin-top:4px}
         .field{display:grid;gap:8px}
         .field label{margin:0;font-weight:700}
@@ -81,7 +90,7 @@
         .order-message{padding:12px 14px;border-radius:16px;background:rgba(108,161,56,.12);color:#36521f;line-height:1.5}
         .error-summary{padding:12px 14px;border-radius:16px;background:rgba(185,28,28,.08);color:#991b1b;line-height:1.5}
         form.inline{display:inline}
-        @media (max-width:900px){.monta-hero,.monta-grid,.grid{grid-template-columns:1fr}.monta-navbar,.monta-topbar-inner,.monta-footer-inner{flex-direction:column;align-items:flex-start}.monta-topbar-left,.monta-topbar-right,.monta-nav,.monta-account-nav{flex-wrap:wrap;justify-content:flex-start}.col-6,.col-4,.col-3{grid-column:span 12}}
+        @media (max-width:900px){.monta-hero,.monta-grid,.grid{grid-template-columns:1fr}.monta-navbar,.monta-topbar-inner,.monta-footer-inner{flex-direction:column;align-items:flex-start}.monta-topbar-left,.monta-topbar-right,.monta-nav,.monta-account-nav{flex-wrap:wrap;justify-content:flex-start}}
     </style>
 </head>
 <body>
@@ -109,14 +118,14 @@
                 <span class="monta-brand-text">Asteria</span>
             </a>
 
-            <nav class="monta-nav">
+            <div class="monta-nav">
                 <?php foreach (frontoffice_navigation() as $slug => $label): ?>
                     <?php $route = 'frontoffice/' . $slug; ?>
-                    <a class="<?= $currentRoute === $route ? 'active' : '' ?>" href="<?= htmlspecialchars(route_url($route), ENT_QUOTES, 'UTF-8') ?>">
+                    <a href="<?= htmlspecialchars(route_url($route), ENT_QUOTES, 'UTF-8') ?>" class="<?= $currentRoute === $route ? 'active' : '' ?>">
                         <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
                     </a>
                 <?php endforeach; ?>
-            </nav>
+            </div>
             <div class="monta-account-nav">
                 <?php if (isset($_SESSION['user'])): ?>
                     <a class="monta-account-link primary" href="<?= htmlspecialchars(action_url('user_dashboard'), ENT_QUOTES, 'UTF-8') ?>">My Space</a>
@@ -312,8 +321,13 @@
             addMessage(message, 'user');
             history.push({role: 'user', text: message});
             typing.style.display = 'block';
+
+            // Determine endpoint based on route context
+            const isCoaching = window.location.href.includes('programs') || window.location.href.includes('ai-coach');
+            const targetEndpoint = isCoaching ? '<?= htmlspecialchars(route_url('frontoffice/ai-coach'), ENT_QUOTES, 'UTF-8') ?>' : endpoint;
+
             try {
-                const response = await fetch(endpoint, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({message, history: history.slice(-8)})});
+                const response = await fetch(targetEndpoint, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({message, history: history.slice(-8)})});
                 const data = await response.json();
                 const reply = data.reply || data.error || 'The assistant could not answer right now.';
                 history.push({role: 'model', text: reply});
@@ -325,7 +339,16 @@
             }
         }
 
-        toggle?.addEventListener('click', () => panel.classList.toggle('open'));
+        toggle?.addEventListener('click', () => {
+            panel.classList.toggle('open');
+            if (panel.classList.contains('open') && messages.children.length <= 1) {
+                const isCoaching = window.location.href.includes('programs') || window.location.href.includes('ai-coach');
+                if (isCoaching) {
+                    const welcome = messages.querySelector('.bot');
+                    if (welcome) welcome.textContent = "Hi! I'm your Asteria Coach. How can I help you with your fitness or nutrition goals today?";
+                }
+            }
+        });
         close?.addEventListener('click', () => panel.classList.remove('open'));
         sendButton?.addEventListener('click', () => ask());
         input?.addEventListener('keydown', (event) => { if (event.key === 'Enter') ask(); });

@@ -30,8 +30,21 @@
         .content .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#ecfeff;color:#0f766e;font-size:12px;font-weight:700}
         .content input,.content select,.content textarea{width:100%;padding:11px 12px;border:1px solid #cbd5e1;border-radius:10px;box-sizing:border-box}
         .content label{display:block;margin-bottom:6px;font-weight:600}
-        .content .row{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
-        .content .col-12{grid-column:span 12}.content .col-6{grid-column:span 6}.content .col-4{grid-column:span 4}.content .col-3{grid-column:span 3}
+        .content .row{display:flex;flex-wrap:wrap;margin-right:-15px;margin-left:-15px}
+        .content .col-12,.content .col-6,.content .col-4,.content .col-3,.content .col-md-5,.content .col-md-4,.content .col-md-3,.content .col-md-2{position:relative;width:100%;padding-right:15px;padding-left:15px}
+        .content .col-12{flex:0 0 100%;max-width:100%}
+        .content .col-6{flex:0 0 50%;max-width:50%}
+        .content .col-4{flex:0 0 33.333333%;max-width:33.333333%}
+        .content .col-3{flex:0 0 25%;max-width:25%}
+        @media (min-width: 768px) {
+            .content .col-md-5{flex:0 0 41.666667%;max-width:41.666667%}
+            .content .col-md-4{flex:0 0 33.333333%;max-width:33.333333%}
+            .content .col-md-3{flex:0 0 25%;max-width:25%}
+            .content .col-md-2{flex:0 0 16.666667%;max-width:16.666667%}
+        }
+        @media (min-width: 1200px) {
+            .content .col-xl-3{flex:0 0 25%;max-width:25%}
+        }
         .content .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
         .content .muted{color:#64748b}
         .content .error{color:#b91c1c;font-size:13px;margin-top:4px}
@@ -47,7 +60,7 @@
         .content .summary-item strong{display:block;margin-bottom:4px;font-size:12px;text-transform:uppercase;color:#64748b}
         .content .readonly-input{background:#f8fafc}
         .content form.inline{display:inline}
-        @media (max-width:800px){.content .col-6,.content .col-4,.content .col-3{grid-column:span 12}}
+        @media (max-width:800px){.content .col-6,.content .col-4,.content .col-3,.content .col-md-5,.content .col-md-4,.content .col-md-3,.content .col-md-2{flex:0 0 100%;max-width:100%}}
     </style>
 </head>
 <body data-menu-color="light" data-sidebar="default">
@@ -109,6 +122,8 @@
                             <li>
                                 <a class="tp-link <?= $currentRoute === $route ? 'active' : '' ?>" href="<?= htmlspecialchars(route_url($route), ENT_QUOTES, 'UTF-8') ?>">
                                     <?php if ($slug === 'dashboard'): ?><i data-feather="home"></i><?php endif; ?>
+                                    <?php if ($slug === 'programs'): ?><i data-feather="calendar"></i><?php endif; ?>
+                                    <?php if ($slug === 'exercises'): ?><i data-feather="target"></i><?php endif; ?>
                                     <?php if ($slug === 'categories'): ?><i data-feather="layers"></i><?php endif; ?>
                                     <?php if ($slug === 'products'): ?><i data-feather="package"></i><?php endif; ?>
                                     <?php if ($slug === 'orders'): ?><i data-feather="shopping-cart"></i><?php endif; ?>
