@@ -126,3 +126,37 @@ CREATE TABLE IF NOT EXISTS progress_records (
         REFERENCES progress_goals(id)
         ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS diet_plans (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(150) NOT NULL,
+    goal TEXT,
+    duration_days INT NOT NULL DEFAULT 30,
+    description TEXT,
+    target_calories_per_day DECIMAL(10,2) DEFAULT 0,
+    level ENUM('BEGINNER', 'INTERMEDIATE', 'ADVANCED') DEFAULT 'BEGINNER',
+    status ENUM('ACTIVE', 'INACTIVE', 'ARCHIVED') DEFAULT 'ACTIVE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS recipes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    diet_plan_id INT NOT NULL,
+    day_number INT NOT NULL,
+    meal_type ENUM('BREAKFAST', 'LUNCH', 'DINNER', 'SNACK') NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    calories DECIMAL(10,2) DEFAULT 0,
+    proteins DECIMAL(10,2) DEFAULT 0,
+    carbs DECIMAL(10,2) DEFAULT 0,
+    fats DECIMAL(10,2) DEFAULT 0,
+    prep_time_minutes INT DEFAULT 0,
+    instructions TEXT,
+    image VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_recipes_diet_plan
+        FOREIGN KEY (diet_plan_id)
+        REFERENCES diet_plans(id)
+        ON DELETE CASCADE
+);

@@ -30,6 +30,7 @@ if (!function_exists('mb_strtolower')) {
 }
 
 require_once ROOT_PATH . '/config/Database.php';
+class_alias('Config\Database', 'Database');
 require_once ROOT_PATH . '/controllers/BaseController.php';
 require_once ROOT_PATH . '/controllers/ProductCategoryController.php';
 require_once ROOT_PATH . '/controllers/ProductController.php';
@@ -114,6 +115,7 @@ function frontoffice_navigation(): array
         'goals' => 'Progress Goals',
         'records' => 'Progress Records',
         'ai-survey' => 'AI Goal Survey',
+        'diet-client' => 'My Diet Plan',
     ];
 }
 
@@ -121,6 +123,7 @@ function backoffice_navigation(): array
 {
     return [
         'dashboard' => 'Dashboard',
+        'diet-admin' => 'Diet Management',
         'programs' => 'Programs',
         'exercises' => 'Exercises',
         'categories' => 'Product Categories',
@@ -436,6 +439,34 @@ switch ($resource) {
         }
         break;
 
+    case 'diet-admin':
+        if ($area !== 'backoffice') {
+            (new HomeController())->notFound();
+            break;
+        }
+        if (!isset($_SESSION['user']) || ($_SESSION['user']['role'] ?? 'user') !== 'admin') {
+            header('Location: ' . action_url('login'));
+            exit;
+        }
+        (new BaseController())->render('diet/admin', [
+            'pageTitle' => 'Diet Management',
+            'area' => 'backoffice',
+            'currentSection' => 'diet',
+        ], 'backoffice');
+        break;
+
+    case 'diet-client':
+        if (!isset($_SESSION['user'])) {
+            header('Location: ' . action_url('login'));
+            exit;
+        }
+        (new BaseController())->render('diet/client', [
+            'pageTitle' => 'My Diet Plan',
+            'area' => 'frontoffice',
+            'currentSection' => 'diet',
+        ], 'frontoffice');
+        break;
+
     case 'users':
         if ($area !== 'backoffice') {
             (new HomeController())->notFound();
@@ -515,4 +546,21 @@ switch ($resource) {
     default:
         (new BaseController())->renderNotFound();
         break;
+}
+
+// Diet Management Routes (Integrated from gestion-diet)
+if (isset($_GET['controller'])) {
+    $controller = $_GET['controller'];
+    $action = $_GET['action'] ?? 'obtenirTous';
+    
+    // Autoload for diet controllers in app/controllers
+    $file = ROOT_PATH . '/app/controllers/' . $controller . 'Controller.php';
+    if (file_exists($file)) {
+        require_once $file;
+        $controllerClass = $controller . 'Controller';
+        if (class_exists($controllerClass) && method_exists($controllerClass, $action)) {
+            $controllerClass::$action();
+            exit;
+        }
+    }
 }

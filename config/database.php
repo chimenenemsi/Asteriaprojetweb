@@ -1,6 +1,12 @@
 <?php
 declare(strict_types=1);
 
+namespace Config;
+
+use PDO;
+use PDOStatement;
+use RuntimeException;
+
 final class Database
 {
     private static ?PDO $connection = null;
@@ -51,6 +57,14 @@ final class Database
         self::ensureSchema(self::$connection);
 
         return self::$connection;
+    }
+
+    /**
+     * Alias for connection() to maintain compatibility with diet management module
+     */
+    public static function getConnexion(): PDO
+    {
+        return self::connection();
     }
 
     private static function ensureSchema(PDO $pdo): void
