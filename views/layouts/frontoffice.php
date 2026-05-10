@@ -97,7 +97,7 @@
     <?php
     $currentRoute = trim((string) ($_GET['route'] ?? 'frontoffice/home'), '/');
     $section = $currentSection ?? 'home';
-    $switchRoute = in_array($section, ['categories', 'products', 'orders'], true) ? 'backoffice/' . $section : 'backoffice/dashboard';
+    $switchRoute = in_array($section, ['categories', 'products', 'orders', 'goals', 'records'], true) ? 'backoffice/' . $section : 'backoffice/dashboard';
     ?>
     <div class="monta-topbar">
         <div class="monta-shell monta-topbar-inner">
@@ -134,7 +134,9 @@
                     <a class="monta-account-link" href="<?= htmlspecialchars(action_url('login'), ENT_QUOTES, 'UTF-8') ?>">Login</a>
                     <a class="monta-account-link primary" href="<?= htmlspecialchars(action_url('register'), ENT_QUOTES, 'UTF-8') ?>">Register</a>
                 <?php endif; ?>
-                <a class="monta-nav-icon" href="<?= htmlspecialchars(route_url($switchRoute), ENT_QUOTES, 'UTF-8') ?>" aria-label="Backoffice">BO</a>
+                <?php if (isset($_SESSION['user']) && ($_SESSION['user']['role'] ?? 'user') === 'admin'): ?>
+                    <a class="monta-nav-icon" href="<?= htmlspecialchars(route_url($switchRoute), ENT_QUOTES, 'UTF-8') ?>" aria-label="Backoffice">BO</a>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -204,157 +206,59 @@
     <script>
     (() => {
         const panel = document.getElementById('product-ai-panel');
+        const bubble = document.querySelector('[data-product-ai]');
         const toggle = document.getElementById('product-ai-toggle');
         const close = document.querySelector('.product-ai-close');
         const messages = document.getElementById('product-ai-messages');
         const input = document.getElementById('product-ai-input');
-        const sendButton = document.getElementById('product-ai-send');
+        const send = document.getElementById('product-ai-send');
         const typing = document.getElementById('product-ai-typing');
-        const endpoint = '<?= htmlspecialchars(route_url('frontoffice/ai-chat'), ENT_QUOTES, 'UTF-8') ?>';
-        let history = [];
 
-        function addMessage(text, role) {
-            const item = document.createElement('div');
-            item.className = 'product-ai-msg ' + role;
-            if (role === 'bot') {
-                item.classList.add('rich');
-                renderBotReply(item, text || 'No response.');
+        const appendMessage = (text, role, isRich = false) => {
+            const msg = document.createElement('div');
+            msg.className = 'product-ai-msg ' + role + (isRich ? ' rich' : '');
+            if (isRich) {
+                msg.innerHTML = text;
             } else {
-                item.textContent = text;
+                msg.innerText = text;
             }
-            messages.appendChild(item);
+            messages.appendChild(msg);
             messages.scrollTop = messages.scrollHeight;
-        }
+        };
 
-        function addText(parent, text, className) {
-            const element = document.createElement('div');
-            if (className) element.className = className;
-            element.textContent = text;
-            parent.appendChild(element);
-            return element;
-        }
-
-        function renderBotReply(parent, rawText) {
-            const lines = String(rawText).split(/\n+/).map(line => line.trim()).filter(Boolean);
-            const productLines = [];
-            const normalLines = [];
-            lines.forEach(line => {
-                if (/^-?\s*\[[^\]]+\].+\|.+DT/i.test(line) || (/^-\s*/.test(line) && /\|/.test(line) && /DT/i.test(line))) {
-                    productLines.push(line.replace(/^-\s*/, ''));
-                } else {
-                    normalLines.push(line);
-                }
-            });
-
-            const titleIndex = normalLines.findIndex(line => /^[🎯⭐🛒📦💡✅]/u.test(line));
-            const title = titleIndex >= 0 ? normalLines[titleIndex] : '🛒 Asteria recommendation';
-            addText(parent, title.replace(/^[-*]\s*/, ''), 'product-ai-title');
-
-            let list = null;
-            normalLines.forEach((line, index) => {
-                if (index === titleIndex) return;
-                if (/^[-*]\s+/.test(line)) {
-                    if (!list) {
-                        list = document.createElement('ul');
-                        list.className = 'product-ai-list';
-                        parent.appendChild(list);
-                    }
-                    const li = document.createElement('li');
-                    li.textContent = line.replace(/^[-*]\s+/, '');
-                    list.appendChild(li);
-                    return;
-                }
-                list = null;
-                if (/^[✅💡⚠️⭐🎯]/u.test(line) || /^(why|tip|alternative|best match)/i.test(line)) {
-                    const section = document.createElement('div');
-                    section.className = 'product-ai-section';
-                    section.textContent = line;
-                    parent.appendChild(section);
-                } else {
-                    addText(parent, line, 'product-ai-section');
-                }
-            });
-
-            if (productLines.length) {
-                const wrap = document.createElement('div');
-                wrap.className = 'product-ai-products';
-                productLines.slice(0, 5).forEach(line => wrap.appendChild(renderProductCard(line)));
-                parent.appendChild(wrap);
-            }
-        }
-
-        function renderProductCard(line) {
-            const card = document.createElement('div');
-            card.className = 'product-ai-card';
-            const parts = line.split('|').map(part => part.trim()).filter(Boolean);
-            let name = parts[0] || line;
-            const categoryMatch = name.match(/^\[([^\]]+)\]\s*(.+)$/);
-            let category = '';
-            if (categoryMatch) {
-                category = categoryMatch[1];
-                name = categoryMatch[2];
-            }
-            addText(card, name, 'product-ai-card-name');
-            const meta = document.createElement('div');
-            meta.className = 'product-ai-card-meta';
-            if (category) addPill(meta, category, '');
-            parts.slice(1).forEach(part => {
-                const cls = /DT/i.test(part) ? 'price' : (/stock/i.test(part) ? 'stock' : '');
-                addPill(meta, part, cls);
-            });
-            card.appendChild(meta);
-            return card;
-        }
-
-        function addPill(parent, text, extraClass) {
-            const pill = document.createElement('span');
-            pill.className = 'product-ai-pill' + (extraClass ? ' ' + extraClass : '');
-            pill.textContent = text;
-            parent.appendChild(pill);
-        }
-
-        async function ask(raw) {
-            const message = (raw || input.value || '').trim();
-            if (!message) return;
+        const askAi = async (prompt) => {
+            if (!prompt.trim()) return;
+            appendMessage(prompt, 'user');
             input.value = '';
-            panel.classList.add('open');
-            addMessage(message, 'user');
-            history.push({role: 'user', text: message});
             typing.style.display = 'block';
 
-            // Determine endpoint based on route context
-            const isCoaching = window.location.href.includes('programs') || window.location.href.includes('ai-coach');
-            const targetEndpoint = isCoaching ? '<?= htmlspecialchars(route_url('frontoffice/ai-coach'), ENT_QUOTES, 'UTF-8') ?>' : endpoint;
-
             try {
-                const response = await fetch(targetEndpoint, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({message, history: history.slice(-8)})});
+                const response = await fetch('<?= htmlspecialchars(route_url('frontoffice/ai-chat'), ENT_QUOTES, 'UTF-8') ?>', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
                 const data = await response.json();
-                const reply = data.reply || data.error || 'The assistant could not answer right now.';
-                history.push({role: 'model', text: reply});
-                addMessage(reply, 'bot');
-            } catch (error) {
-                addMessage('Connection error. Please try again.', 'bot');
+                if (data.response) {
+                    appendMessage(data.response, 'bot', data.is_rich || false);
+                } else {
+                    appendMessage('Sorry, I encountered an error.', 'bot');
+                }
+            } catch (err) {
+                appendMessage('Connection error.', 'bot');
             } finally {
                 typing.style.display = 'none';
             }
-        }
+        };
 
-        toggle?.addEventListener('click', () => {
-            panel.classList.toggle('open');
-            if (panel.classList.contains('open') && messages.children.length <= 1) {
-                const isCoaching = window.location.href.includes('programs') || window.location.href.includes('ai-coach');
-                if (isCoaching) {
-                    const welcome = messages.querySelector('.bot');
-                    if (welcome) welcome.textContent = "Hi! I'm your Asteria Coach. How can I help you with your fitness or nutrition goals today?";
-                }
-            }
+        toggle.onclick = () => panel.classList.toggle('open');
+        close.onclick = () => panel.classList.remove('open');
+        send.onclick = () => askAi(input.value);
+        input.onkeydown = (e) => { if (e.key === 'Enter') askAi(input.value); };
+        document.querySelectorAll('[data-ai-suggest]').forEach(btn => {
+            btn.onclick = () => askAi(btn.getAttribute('data-ai-suggest'));
         });
-        close?.addEventListener('click', () => panel.classList.remove('open'));
-        sendButton?.addEventListener('click', () => ask());
-        input?.addEventListener('keydown', (event) => { if (event.key === 'Enter') ask(); });
-        document.querySelectorAll('[data-ai-suggest]').forEach((button) => button.addEventListener('click', () => ask(button.dataset.aiSuggest || '')));
     })();
     </script>
-
 </body>
 </html>

@@ -1,12 +1,13 @@
 <section class="monta-section">
     <div class="monta-hero">
         <div>
-            <span class="monta-eyebrow">Asteria Produits</span>
-            <h1>Browse products and place orders from one clean frontoffice.</h1>
-            <p>Explore the catalog, compare stock and prices, create delivery orders, and keep the produits module as the real homepage for visitors and signed-in users.</p>
+            <span class="monta-eyebrow">Asteria Unified Home</span>
+            <h1>Manage products, programs, and progress in one place.</h1>
+            <p>Explore our products, join coaching programs, and track your fitness goals with our integrated AI-powered platform.</p>
             <div class="monta-actions">
-                <a class="monta-button" href="<?= htmlspecialchars(route_url('frontoffice/products'), ENT_QUOTES, 'UTF-8') ?>">Open Products</a>
-                <a class="monta-button secondary" href="<?= htmlspecialchars(route_url('frontoffice/categories'), ENT_QUOTES, 'UTF-8') ?>">Open Categories</a>
+                <a class="monta-button" href="<?= htmlspecialchars(route_url('frontoffice/products'), ENT_QUOTES, 'UTF-8') ?>">Browse Products</a>
+                <a class="monta-button" href="<?= htmlspecialchars(route_url('frontoffice/programs'), ENT_QUOTES, 'UTF-8') ?>">Coaching Programs</a>
+                <a class="monta-button secondary" href="<?= htmlspecialchars(route_url('frontoffice/goals'), ENT_QUOTES, 'UTF-8') ?>">Track Progress</a>
                 <?php if (!isset($_SESSION['user'])): ?>
                     <a class="monta-button secondary" href="<?= htmlspecialchars(action_url('login'), ENT_QUOTES, 'UTF-8') ?>">Login</a>
                 <?php else: ?>
@@ -15,7 +16,7 @@
             </div>
         </div>
         <div class="monta-hero-visual">
-            <img src="<?= htmlspecialchars(asset_url('assets/frontoffice/nutrio.radiantthemes.com/wp-content/uploads/2022/05/about-us-image.jpg'), ENT_QUOTES, 'UTF-8') ?>" alt="Asteria produits">
+            <img src="<?= htmlspecialchars(asset_url('assets/frontoffice/nutrio.radiantthemes.com/wp-content/uploads/2022/05/about-us-image.jpg'), ENT_QUOTES, 'UTF-8') ?>" alt="Asteria Platform">
         </div>
     </div>
 </section>
@@ -23,52 +24,52 @@
 <section class="monta-section">
     <div class="monta-grid">
         <div class="monta-card">
-            <h3>Product Categories</h3>
-            <p>Organize the catalog into clean sections and keep related products grouped together.</p>
+            <h3>Products & Shop</h3>
+            <p>Order supplements, equipment, and nutrition guides from our curated catalog.</p>
         </div>
         <div class="monta-card">
-            <h3>Products</h3>
-            <p>Handle SKU, price, stock, and status inside a standalone product flow.</p>
+            <h3>Coaching & AI</h3>
+            <p>Follow expert training plans with our Gemini-powered AI coach available 24/7.</p>
         </div>
         <div class="monta-card">
-            <h3>Orders</h3>
-            <p>Place orders from the product catalog while backoffice handles delivery state changes later.</p>
+            <h3>Progress & Goals</h3>
+            <p>Set measurable targets, record your metrics, and visualize your success journey.</p>
         </div>
     </div>
 </section>
 
 <style>
-.produits-polish-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;margin-top:28px}
-.produits-polish-card{padding:28px;border-radius:28px;background:#fff;box-shadow:0 22px 54px rgba(21,49,34,.08);border:1px solid rgba(21,49,34,.06)}
-.produits-polish-card h2{margin:0 0 12px;font-size:30px;line-height:1.1;color:#153122}
-.produits-polish-card p{color:#60706a;line-height:1.7}
-.produits-feature-list{display:grid;gap:12px;margin-top:18px}
-.produits-feature-list div{padding:14px 16px;border-radius:18px;background:#f7fbf4;color:#315021;border:1px solid rgba(108,161,56,.16)}
-.produits-mini-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.produits-mini-stat{display:block;text-decoration:none;padding:18px;border-radius:20px;background:linear-gradient(180deg,#f8fafc,#fff);border:1px solid rgba(21,49,34,.08)}
-.produits-mini-stat strong{display:block;font-size:26px;color:#6ca138}
-.produits-mini-stat span{display:block;color:#60706a;margin-top:5px}
-@media (max-width:900px){.produits-polish-grid,.produits-mini-stats{grid-template-columns:1fr}}
+.unified-polish-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;margin-top:28px}
+.unified-polish-card{padding:28px;border-radius:28px;background:#fff;box-shadow:0 22px 54px rgba(21,49,34,.08);border:1px solid rgba(21,49,34,.06)}
+.unified-polish-card h2{margin:0 0 12px;font-size:30px;line-height:1.1;color:#153122}
+.unified-polish-card p{color:#60706a;line-height:1.7}
+.unified-feature-list{display:grid;gap:12px;margin-top:18px}
+.unified-feature-list div{padding:14px 16px;border-radius:18px;background:#f7fbf4;color:#315021;border:1px solid rgba(108,161,56,.16)}
+.unified-mini-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.unified-mini-stat{display:block;text-decoration:none;padding:18px;border-radius:20px;background:linear-gradient(180deg,#f8fafc,#fff);border:1px solid rgba(21,49,34,.08)}
+.unified-mini-stat strong{display:block;font-size:26px;color:#6ca138}
+.unified-mini-stat span{display:block;color:#60706a;margin-top:5px}
+@media (max-width:900px){.unified-polish-grid,.unified-mini-stats{grid-template-columns:1fr}}
 </style>
 
-<section class="produits-polish-grid">
-    <div class="produits-polish-card">
-        <span class="monta-eyebrow">Smarter Shopping</span>
-        <h2>Cleaner catalog, faster decisions, and Gemini help.</h2>
-        <p>The frontoffice now acts as the shared home for the application: guests can discover the catalog, users can return to their space, and admins can still manage the backoffice.</p>
-        <div class="produits-feature-list">
-            <div>Catalog-aware chatbot using the products stored in your database.</div>
-            <div>Direct routes to categories, products, orders, login, and user dashboard.</div>
-            <div>Server-side PHP validation stays inside the existing controllers.</div>
+<section class="unified-polish-grid">
+    <div class="unified-polish-card">
+        <span class="monta-eyebrow">Integrated Experience</span>
+        <h2>Your journey, our technology, shared results.</h2>
+        <p>The Asteria platform now brings everything together. Whether you are shopping for products, following a training program, or tracking your body metrics, everything works as one.</p>
+        <div class="unified-feature-list">
+            <div>Catalog-aware AI coach using the products and programs from our database.</div>
+            <div>Progress tracking linked to your training goals and nutrition plans.</div>
+            <div>Seamless transition between shopping, coaching, and monitoring.</div>
         </div>
     </div>
-    <div class="produits-polish-card">
-        <h2>Storefront shortcuts</h2>
-        <div class="produits-mini-stats">
-            <a class="produits-mini-stat" href="<?= htmlspecialchars(route_url('frontoffice/categories'), ENT_QUOTES, 'UTF-8') ?>"><strong>01</strong><span>Browse categories</span></a>
-            <a class="produits-mini-stat" href="<?= htmlspecialchars(route_url('frontoffice/products'), ENT_QUOTES, 'UTF-8') ?>"><strong>02</strong><span>Compare products</span></a>
-            <a class="produits-mini-stat" href="<?= htmlspecialchars(route_url('frontoffice/orders/new'), ENT_QUOTES, 'UTF-8') ?>"><strong>03</strong><span>Create an order</span></a>
-            <a class="produits-mini-stat" href="#product-ai-toggle"><strong>AI</strong><span>Ask Gemini</span></a>
+    <div class="unified-polish-card">
+        <h2>Quick Shortcuts</h2>
+        <div class="unified-mini-stats">
+            <a class="unified-mini-stat" href="<?= htmlspecialchars(route_url('frontoffice/products'), ENT_QUOTES, 'UTF-8') ?>"><strong>Shop</strong><span>Products</span></a>
+            <a class="unified-mini-stat" href="<?= htmlspecialchars(route_url('frontoffice/programs'), ENT_QUOTES, 'UTF-8') ?>"><strong>Coach</strong><span>Programs</span></a>
+            <a class="unified-mini-stat" href="<?= htmlspecialchars(route_url('frontoffice/goals'), ENT_QUOTES, 'UTF-8') ?>"><strong>Track</strong><span>Goals</span></a>
+            <a class="unified-mini-stat" href="<?= htmlspecialchars(route_url('frontoffice/records'), ENT_QUOTES, 'UTF-8') ?>"><strong>Log</strong><span>Progress</span></a>
         </div>
     </div>
 </section>

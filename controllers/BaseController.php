@@ -14,6 +14,16 @@ class BaseController
         require ROOT_PATH . '/views/layouts/' . $area . '.php';
     }
 
+    public function renderNotFound(): void
+    {
+        http_response_code(404);
+        $this->render('errors/not-found', [
+            'pageTitle' => 'Page Not Found',
+            'area' => 'frontoffice',
+            'currentSection' => '',
+        ], 'frontoffice');
+    }
+
     protected function redirect(string $route, array $params = []): void
     {
         header('Location: ' . route_url($route, $params));
@@ -330,15 +340,6 @@ class BaseController
             static fn (float $value): string => number_format($value, 3, '.', ''),
             $color
         )) . ' ' . $operator;
-    }
-
-    public function renderNotFound(): void
-    {
-        http_response_code(404);
-
-        $this->render('errors/not-found', [
-            'pageTitle' => 'Page Not Found',
-        ]);
     }
 
     protected function getFrontofficeNavigation(): array

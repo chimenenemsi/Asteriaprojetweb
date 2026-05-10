@@ -41,6 +41,9 @@ require_once ROOT_PATH . '/controllers/FrontofficeController.php';
 require_once ROOT_PATH . '/controllers/BackofficeController.php';
 require_once ROOT_PATH . '/controllers/GeminiCoachService.php';
 require_once ROOT_PATH . '/controllers/AiCoachController.php';
+require_once ROOT_PATH . '/controllers/AiSurveyController.php';
+require_once ROOT_PATH . '/controllers/ProgressGoalController.php';
+require_once ROOT_PATH . '/controllers/ProgressRecordController.php';
 
 function base_url(): string
 {
@@ -108,6 +111,9 @@ function frontoffice_navigation(): array
         'categories' => 'Product Categories',
         'products' => 'Products',
         'orders' => 'Orders',
+        'goals' => 'Progress Goals',
+        'records' => 'Progress Records',
+        'ai-survey' => 'AI Goal Survey',
     ];
 }
 
@@ -122,6 +128,9 @@ function backoffice_navigation(): array
         'orders' => 'Orders',
         'users' => 'Users',
         'follow' => 'Follow',
+        'goals' => 'Progress Goals',
+        'records' => 'Progress Records',
+        'ai-survey' => 'AI Goal Survey',
     ];
 }
 
@@ -240,6 +249,15 @@ $area = ($segments[0] ?? 'frontoffice') === 'backoffice' ? 'backoffice' : 'front
 $resource = $segments[1] ?? 'home';
 $action = $segments[2] ?? 'index';
 
+// Admin-only access for backoffice
+if ($area === 'backoffice') {
+    if (!isset($_SESSION['user']) || ($_SESSION['user']['role'] ?? 'user') !== 'admin') {
+        // Redirect to login or show an unauthorized message
+        header('Location: ' . action_url('login'));
+        exit;
+    }
+}
+
 switch ($resource) {
     case 'home':
         (new HomeController())->index();
@@ -299,6 +317,14 @@ switch ($resource) {
 
     case 'ai-summary':
         (new AiCoachController())->summarize();
+        break;
+
+    case 'ai-survey':
+        if ($action === 'recommend') {
+            (new AiSurveyController())->recommend();
+        } else {
+            (new AiSurveyController())->survey($area);
+        }
         break;
 
     case 'dashboard':
@@ -434,7 +460,59 @@ switch ($resource) {
         ], 'backoffice');
         break;
 
+    case 'goals':
+        $controller = new ProgressGoalController();
+        if ($area === 'frontoffice') {
+            if ($action === 'new') {
+                $controller->form($area, 'create');
+            } elseif ($action === 'create') {
+                $controller->create($area);
+            } elseif ($action === 'show') {
+                $controller->show($area);
+            } elseif ($action === 'edit') {
+                $controller->form($area, 'edit');
+            } elseif ($action === 'update') {
+                $controller->update($area);
+            } elseif ($action === 'delete') {
+                $controller->delete($area);
+            } else {
+                $controller->index($area);
+            }
+        } else {
+            if ($action === 'show') {
+                $controller->show($area);
+            } else {
+                $controller->index($area);
+            }
+        }
+        break;
+
+    case 'records':
+        $controller = new ProgressRecordController();
+        if ($area === 'frontoffice') {
+            if ($action === 'new') {
+                $controller->form($area, 'create');
+            } elseif ($action === 'create') {
+                $controller->create($area);
+            } elseif ($action === 'edit') {
+                $controller->form($area, 'edit');
+            } elseif ($action === 'update') {
+                $controller->update($area);
+            } elseif ($action === 'delete') {
+                $controller->delete($area);
+            } else {
+                $controller->index($area);
+            }
+        } else {
+            if ($action === 'show') {
+                $controller->show($area);
+            } else {
+                $controller->index($area);
+            }
+        }
+        break;
+
     default:
-        (new HomeController())->notFound();
+        (new BaseController())->renderNotFound();
         break;
 }

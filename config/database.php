@@ -5,11 +5,6 @@ final class Database
 {
     private static ?PDO $connection = null;
 
-    public function connect(): PDO
-    {
-        return self::connection();
-    }
-
     public static function connection(): PDO
     {
         if (self::$connection instanceof PDO) {
@@ -60,45 +55,6 @@ final class Database
 
     private static function ensureSchema(PDO $pdo): void
     {
-        self::ensureUsersSchema($pdo);
-        self::ensureProductsSchema($pdo);
-        self::ensureCoachingSchema($pdo);
-    }
-
-    private static function ensureCoachingSchema(PDO $pdo): void
-    {
-        $stmt = $pdo->query("SHOW TABLES LIKE 'programs'");
-        $tableExists = $stmt->fetch() !== false;
-
-        if ($tableExists) {
-            // Check for missing columns in existing table
-            $stmt = $pdo->query("SHOW COLUMNS FROM programs LIKE 'created_at'");
-            if ($stmt->fetch() === false) {
-                $pdo->exec("ALTER TABLE programs ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
-                $pdo->exec("ALTER TABLE programs ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
-            }
-            return;
-        }
-
-        $sql = file_get_contents(ROOT_PATH . '/config/schema.sql');
-        if ($sql === false) {
-            return;
-        }
-
-        $statements = array_filter(array_map('trim', preg_split('/;\s*(?:\r?\n|$)/', $sql) ?: []));
-        foreach ($statements as $statement) {
-            if ($statement !== '') {
-                try {
-                    $pdo->exec($statement);
-                } catch (Throwable) {
-                    // Ignore errors if table already exists or other minor issues
-                }
-            }
-        }
-    }
-
-    private static function ensureProductsSchema(PDO $pdo): void
-    {
         $stmt = $pdo->query("SHOW TABLES LIKE 'product_categories'");
         if ($stmt->fetch() !== false) {
             return;
@@ -113,37 +69,6 @@ final class Database
         foreach ($statements as $statement) {
             if ($statement !== '') {
                 $pdo->exec($statement);
-            }
-        }
-    }
-
-    private static function ensureUsersSchema(PDO $pdo): void
-    {
-        $pdo->exec(
-            "CREATE TABLE IF NOT EXISTS users (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                fullname VARCHAR(150) NOT NULL,
-                email VARCHAR(255) NOT NULL UNIQUE,
-                password VARCHAR(255) NOT NULL,
-                role VARCHAR(20) NOT NULL DEFAULT 'user',
-                secret_code VARCHAR(255) NULL,
-                reset_token VARCHAR(255) NULL,
-                reset_expires_at DATETIME NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-        );
-
-        $columns = [
-            'role' => "ALTER TABLE users ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'user'",
-            'secret_code' => "ALTER TABLE users ADD COLUMN secret_code VARCHAR(255) NULL",
-            'reset_token' => "ALTER TABLE users ADD COLUMN reset_token VARCHAR(255) NULL",
-            'reset_expires_at' => "ALTER TABLE users ADD COLUMN reset_expires_at DATETIME NULL",
-        ];
-
-        foreach ($columns as $column => $sql) {
-            $stmt = $pdo->query('SHOW COLUMNS FROM users LIKE ' . $pdo->quote($column));
-            if ($stmt->fetch() === false) {
-                $pdo->exec($sql);
             }
         }
     }

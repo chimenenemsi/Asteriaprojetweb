@@ -59,5 +59,6 @@ function services(): array
 // Aliases for compatibility
 function produits_services() { return services(); }
 function coaching_services() { return services(); }
+function progress_services() { return services(); }
 
 return services();

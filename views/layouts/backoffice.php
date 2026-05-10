@@ -67,7 +67,7 @@
     <?php
     $currentRoute = trim((string) ($_GET['route'] ?? 'backoffice/dashboard'), '/');
     $section = $currentSection ?? 'dashboard';
-    $switchRoute = in_array($section, ['categories', 'products', 'orders'], true) ? 'frontoffice/' . $section : 'frontoffice/home';
+    $switchRoute = in_array($section, ['categories', 'products', 'orders', 'goals', 'records'], true) ? 'frontoffice/' . $section : 'frontoffice/home';
     ?>
     <div id="app-layout">
         <div class="topbar-custom">
@@ -123,10 +123,13 @@
                                 <a class="tp-link <?= $currentRoute === $route ? 'active' : '' ?>" href="<?= htmlspecialchars(route_url($route), ENT_QUOTES, 'UTF-8') ?>">
                                     <?php if ($slug === 'dashboard'): ?><i data-feather="home"></i><?php endif; ?>
                                     <?php if ($slug === 'programs'): ?><i data-feather="calendar"></i><?php endif; ?>
-                                    <?php if ($slug === 'exercises'): ?><i data-feather="target"></i><?php endif; ?>
+                                    <?php if ($slug === 'exercises'): ?><i data-feather="activity"></i><?php endif; ?>
                                     <?php if ($slug === 'categories'): ?><i data-feather="layers"></i><?php endif; ?>
                                     <?php if ($slug === 'products'): ?><i data-feather="package"></i><?php endif; ?>
                                     <?php if ($slug === 'orders'): ?><i data-feather="shopping-cart"></i><?php endif; ?>
+                                    <?php if ($slug === 'goals'): ?><i data-feather="target"></i><?php endif; ?>
+                                    <?php if ($slug === 'records'): ?><i data-feather="clipboard"></i><?php endif; ?>
+                                    <?php if ($slug === 'ai-survey'): ?><i data-feather="help-circle"></i><?php endif; ?>
                                     <span><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></span>
                                 </a>
                             </li>
@@ -136,7 +139,7 @@
                     <ul id="side-menu-secondary">
                         <li>
                             <a class="tp-link <?= $currentRoute === 'backoffice/follow' ? 'active' : '' ?>" href="<?= htmlspecialchars(route_url('backoffice/follow'), ENT_QUOTES, 'UTF-8') ?>">
-                                <i data-feather="activity"></i>
+                                <i data-feather="heart"></i>
                                 <span>Follow</span>
                             </a>
                         </li>
